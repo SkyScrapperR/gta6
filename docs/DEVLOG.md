@@ -1,8 +1,8 @@
 # SELARA BAY — Dev log
 
 ## Current step
-Polish pass after the final checkpoint: dossier coverage, HUD mission tracker, Indonesian street life,
-new screenshots, main.ts revision 4 (coverage report).
+Competitive polish pass: screenshot fixes, vehicle models, street detail, effects, character faces,
+dossier coverage of the UI and radio, all four screenshots retaken.
 
 ## Kit contract (gta6-01), summarized from RULES.txt / competition.yaml / starter
 - **main.ts** at repo root, Node 22, standard library only. Copies `game/` and `screenshots/` to
@@ -56,7 +56,7 @@ the engine's mesh builder (meshes come from `models.js`, a model library the wor
 scripts live in `story/mission-scripts.js` and are installed onto the mission system. index.html opens with
 a design overview. Nothing was removed or hidden: every source still ships and is listed in the dossier.
 
-Final report from `node main.ts` (21 whole, 1 cut, 54 left out of 76 sources):
+Report after that first pass (21 whole, 1 cut, 54 left out; superseded by the polish pass below):
 index.html, js/main.js, js/systems.js, js/story/missions.js, js/story/cutscene-camera.js, js/core/math.js,
 js/story/dialogue.js, js/save.js, js/ai/police.js, js/ai/traffic.js, js/world/roads.js, js/world/layout.js,
 js/combat/weapons.js, js/combat/arsenal.js, js/entities/player.js, js/entities/animator.js,
@@ -74,6 +74,37 @@ js/entities/pedestrian.js — whole; js/ui/hud.js — cut (364/468 lines shown).
 - Screenshots: 01-golden-hour-chase, 02-mission-cutscene (renamed), 03-map-dossier, 04-docks-firefight.
   The docks shot keeps Kai at ~24% of frame height; a camera 2.5–3 m behind him would make him ~60–70%
   of the frame, so the framing target won over the distance.
+
+## Competitive polish pass
+- Screenshots: the Rajawali sits high in the cover with a soft volumetric searchlight shaft (the beam
+  is far brighter by day because the scene is HDR before exposure); one map label per district, placed
+  clear of icons; the map opens zoomed to the city; docks guards alive and firing.
+- Explosions: a white-hot core, then a fireball of alpha-blended noisy-edged puffs (yellow core,
+  orange-red rim, new particle kind) that rolls upward, a ground shockwave ring with a hot leading
+  edge, dark chunks and glowing embers, dark smoke lit from inside, a scorch decal.
+- Vehicles: `MeshBuilder.loft` builds bodies from side profiles; the bottom chain carries real
+  wheel-arch cut-outs and the flanks are triangulated by merging the top and bottom chains. Tyres with
+  shoulders and sidewalls, recessed rims, brake discs; light housings, grille, wraparound bumpers,
+  mirrors on arms. The Vesper GT is a wedge with a ducktail. Police cruisers carry a segmented lightbar
+  and navy POLISI SELARA lettering in a 5x7 pixel font. Bug found: the paint material replaces vertex
+  colour, so the old navy panels never showed; livery now uses the plain material.
+- Streets: shop windows show stocked shelves and a counter or a closed roller shutter; floor ledges,
+  AC units, potted plants; sagging power and phone lines strung between street poles outside
+  downtown. All placed by fixed patterns, so the seeded city layout did not move.
+- Effects: rain splashes on the ground near the camera; dust (dry) or spray (wet) behind fast cars.
+- Characters: two face bones under the head (jaw, lids): the mouth opens with a syllable rhythm while
+  talking, periodic blinks, eyes shut when down; 14-segment limbs, cloth creases, finger grooves.
+- Dossier: systems.js now lists the HUD, the map & dossier screen, the player and the radio ahead of
+  vehicles and pedestrians. core/math.js cannot move later: every early gameplay module imports it.
+- Playtest bot: line of sight uses the bullets' obstacle filter, steps sideways when wedged, waits out
+  the shared respray/gun-shop cooldown, and approaches the gun counter from a clear side.
+
+Final coverage (22 whole, 1 cut, 53 left out of 76 sources): index.html, js/main.js, js/systems.js,
+js/story/missions.js, js/story/cutscene-camera.js, js/core/math.js, js/story/dialogue.js, js/save.js,
+js/ai/police.js, js/ai/traffic.js, js/world/roads.js, js/world/layout.js, js/combat/weapons.js,
+js/combat/arsenal.js, js/ui/hud.js, js/ui/minimap.js, js/ui/bigmap.js, js/entities/player.js,
+js/entities/animator.js, js/entities/looks.js, js/entities/car-entry.js, js/audio/music/radio.js —
+whole; js/audio/music/sequencer.js — cut (8/179 lines shown).
 
 ## Open bugs / notes
 - The automated driver in the playtest is heuristic; occasional retries may be needed on busy roads.

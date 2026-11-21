@@ -22,7 +22,7 @@ export class BigMap {
   constructor(world, hud) {
     this.world = world;
     this.hud = hud;
-    this.zoom = 1;
+    this.zoom = 1.4; // the city fills the space between the legend and the dossier; the wheel zooms
     this.open = false;
     this.canvas = document.getElementById('hud');
     addEventListener('mousedown', (e) => this.onClick(e));
@@ -34,8 +34,8 @@ export class BigMap {
     const size = Math.min(W, H) * 0.9 * this.zoom;
     const scale = size / MAP_SIZE;
     const p = this.world.player;
-    const cx = this.zoom > 1 ? W / 2 - (p.x - MAP_MIN - MAP_SIZE / 2) * scale : W / 2;
-    const cy = this.zoom > 1 ? H / 2 - (p.z - MAP_MIN - MAP_SIZE / 2) * scale : H / 2;
+    const cx = this.zoom > 1.6 ? W / 2 - (p.x - MAP_MIN - MAP_SIZE / 2) * scale : W / 2;
+    const cy = this.zoom > 1.6 ? H / 2 - (p.z - MAP_MIN - MAP_SIZE / 2) * scale : H / 2;
     return { x0: cx - size / 2, y0: cy - size / 2, scale };
   }
 

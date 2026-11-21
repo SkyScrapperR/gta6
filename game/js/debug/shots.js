@@ -213,7 +213,7 @@ export async function runShot(app, name) {
     truck.damage(5000);
     // Catch the fireball while it is still orange, on a frame right after a guard fires.
     const t0 = g.time;
-    await new Promise((res) => { const f = () => ((g.time > t0 + 0.2 && g.time - npcShot < 0.05) || g.time > t0 + 0.55 ? res() : requestAnimationFrame(f)); f(); });
+    await new Promise((res) => { const f = () => ((g.time > t0 + 0.11 && g.time - npcShot < 0.06) || g.time > t0 + 0.26 ? res() : requestAnimationFrame(f)); f(); });
   } else if (name === 'kaicop') {
     midGame(app);
     app.setState('playing');

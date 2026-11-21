@@ -37,7 +37,7 @@ void main() {
   // Soft volume: brightest where the view looks through the middle of the shaft, fading to nothing
   // at its silhouette, and dimmer towards the ground.
   float facing = abs(dot(normalize(vN), normalize(uCamPos - vW)));
-  float a = (1.0 - vT * 0.7) * 0.06 * uStrength * facing;
+  float a = (1.0 - vT * 0.8) * 0.06 * uStrength * pow(facing, 1.5);
   fragColor = vec4(vec3(1.0, 0.97, 0.88) * a, 1.0);
 }
 `;
@@ -77,9 +77,9 @@ export class Searchlight {
       gl.uniform3fv(p.u('uCamPos'), renderer.camera.pos);
       gl.uniform3fv(p.u('uTo'), s);
       // The visible shaft is the bright core of the spot (narrower than its full light cone).
-      gl.uniform1f(p.u('uRadius'), Math.min(3.2, l * 0.07));
+      gl.uniform1f(p.u('uRadius'), Math.min(2.4, l * 0.06));
       // The scene is HDR before exposure, so the beam must be far brighter by day to read as haze at all.
-      gl.uniform1f(p.u('uStrength'), 3.0 + (1 - renderer.env.night) * 6);
+      gl.uniform1f(p.u('uStrength'), 3.0 + (1 - renderer.env.night) * 5.0);
       gl.blendFunc(gl.ONE, gl.ONE);
       gl.disable(gl.CULL_FACE);
       gl.bindVertexArray(this.vao);

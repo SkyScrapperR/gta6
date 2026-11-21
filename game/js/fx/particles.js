@@ -217,7 +217,7 @@ export class Particles {
     for (let k = 0; k < 26; k++) {
       const a = Math.random() * 6.28, s = (1 + Math.random() * 3) * scale;
       // Smoke lit from inside: starts warm and glowing, cools to dark grey.
-      this.spawn({ x: x + Math.cos(a) * 0.8, y: y + 1 + Math.random() * 2, z: z + Math.sin(a) * 0.8, vx: Math.cos(a) * s, vy: 2 + Math.random() * 3, vz: Math.sin(a) * s, life: 3 + Math.random() * 2, size: 1.2 * scale, size1: 4.2 * scale, col: [1.5, 0.5, 0.16, 0.9], col1: [0.05, 0.05, 0.05, 0], kind: PK.SMOKE, drag: 0.9 });
+      this.spawn({ x: x + Math.cos(a) * 0.8, y: y + 1 + Math.random() * 2, z: z + Math.sin(a) * 0.8, vx: Math.cos(a) * s, vy: 2 + Math.random() * 3, vz: Math.sin(a) * s, life: 3 + Math.random() * 2, size: 1.2 * scale, size1: 4.2 * scale, col: [0.85, 0.3, 0.1, 0.92], col1: [0.05, 0.05, 0.05, 0], kind: PK.SMOKE, drag: 0.9 });
     }
     this.sparks(x, y + 0.5, z, 0, 1, 0, 30, [9, 5, 1.5]);
     // Shockwave: a ring of dust racing outwards along the ground with a hot, thin leading edge.
