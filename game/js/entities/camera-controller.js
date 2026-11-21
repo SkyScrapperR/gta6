@@ -76,7 +76,7 @@ export class CameraController {
       this.lookIdle = 0;
     } else {
       this.lookIdle += dt;
-      if (this.lookIdle > 1.5) {
+      if (this.lookIdle > 1.5 && !this.holdLook) {
         this.lookOffset = dampAngle(this.lookOffset, 0, 3, dt);
         this.lookPitch = damp(this.lookPitch, 0, 3, dt);
       }

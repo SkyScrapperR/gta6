@@ -110,6 +110,11 @@ export class Combat {
         best = { t, x: ox + dx * t, y, z: oz + dz * t, nx: hx / hl, ny: 0, nz: hz / hl, vehicle: v };
       }
     }
+    // The police helicopter.
+    if (w.heli && shooter === w.player) {
+      const ht = w.heli.hitTest(ox, oy, oz, dx, dy, dz, best.t);
+      if (ht !== null) best = { t: ht, x: ox + dx * ht, y: oy + dy * ht, z: oz + dz * ht, nx: -dx, ny: -dy, nz: -dz, heli: true };
+    }
     return best;
   }
 
@@ -128,6 +133,12 @@ export class Combat {
       return;
     }
     if (h === w.player || h.isPlayer) return;
+    if (h.heli) {
+      w.heli.damage(damage);
+      fx.particles.sparks(h.x, h.y, h.z, h.nx, h.ny, h.nz, 6);
+      this.hitMarker = Math.max(this.hitMarker, 0.6);
+      return;
+    }
     if (h.vehicle) {
       h.vehicle.damage(damage * 0.9, shooter === w.player ? 'player' : 'npc');
       fx.particles.sparks(h.x, h.y, h.z, h.nx, h.ny, h.nz, 6);

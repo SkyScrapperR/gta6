@@ -10,6 +10,7 @@ import { HUD } from './ui/hud.js';
 import { BigMap } from './ui/bigmap.js';
 import { Menus } from './ui/menus.js';
 import { AudioSystem } from './audio/sfx.js';
+import { MusicDirector } from './audio/music/radio.js';
 import { hasSave, loadSave, applySave, loadSettings, saveSettings } from './save.js';
 import { WEAPONS } from './combat/weapons.js';
 import { VEHICLES } from './entities/vehicle-model.js';
@@ -157,6 +158,8 @@ async function boot() {
   app.game = new Game(app.renderer, app.input);
   app.game.app = app;
   app.game.audio = app.audio;
+  app.game.music = new MusicDirector(app.audio);
+  app.game.music.world = app.game;
   const fill = document.getElementById('loadfill');
   const text = document.getElementById('loadtext');
   await app.game.load((p, msg) => {
@@ -227,6 +230,7 @@ function loop(now) {
     else if (!g.cinematic && app.state === 'cutscene') app.setState('playing');
   }
   app.audio.update(dt, g);
+  g.music.ensure();
   g.render(dt);
   if (app.state === 'map') app.bigmap.draw();
   else app.hud.draw(app.state === 'paused' ? 0 : dt);

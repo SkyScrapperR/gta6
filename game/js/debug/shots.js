@@ -22,6 +22,7 @@ function midGame(app) {
   g.arsenal.give('pistol', 96);
   g.arsenal.give('smg', 240);
   g.capture = true;
+  g.notes.clear('toast');
   app.renderer.adaptiveScale = 1;
   app.renderer.post.autoExposure = true;
 }
@@ -49,14 +50,22 @@ export async function runShot(app, name) {
     g.wanted.setStars(4);
     g.wanted.reveal();
     for (let k = 0; k < 3; k++) {
-      const c = g.vehicles.spawn('patrol', 502.6 + (k % 2 ? -5.2 : 0), 316 - k * 10, 0);
+      const c = g.vehicles.spawn('patrol', 502.6 + (k % 2 ? -4.6 : 0.4), 318 - k * 9, 0);
       g.police.enlist(c);
-      c.speed = 18;
+      c.speed = 21;
       c.siren = true;
+      c.ai = null;
+      c.driver = 'shot';
+      c.shotLane = 502.6 + (k % 2 ? -4.6 : 0.4);
     }
+    g.autoPolice = (dt) => { for (const c of g.vehicles.list) if (c.driver === 'shot') { c.throttle = c.speed < 21 ? 0.9 : 0.2; c.steer = (c.shotLane - c.x) * 0.06 - Math.sin(c.yaw) * 1.2; c.siren = true; } };
     v.speed = 20;
     g.autoDrive = (dt) => { v.throttle = 0.75; v.steer = (502.6 - v.x) * 0.08 - Math.sin(v.yaw) * 1.2; };
-    g.heli?.spawnNear(v.x, v.z - 30);
+    g.heli.spawnNear(v.x, v.z - 30);
+    Object.assign(g.heli, { x: v.x - 10, z: v.z - 34, y: 24 });
+    g.camCtl.lookOffset = 2.75;
+    g.camCtl.lookPitch = 0.12;
+    g.camCtl.holdLook = true;
     g.music?.radioOn?.(0);
     await wait(app, 3.5);
   } else if (name === 'cutscene') {

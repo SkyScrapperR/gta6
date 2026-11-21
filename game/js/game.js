@@ -20,6 +20,7 @@ import { Arsenal } from './combat/arsenal.js';
 import { Pickups } from './combat/pickups.js';
 import { Notifications } from './ui/notifications.js';
 import { Markers } from './fx/markers.js';
+import { Helicopter } from './entities/helicopter.js';
 import { MissionSystem } from './story/missions.js';
 import { OrchidTags, Shops } from './story/side-content.js';
 import { POINTS } from './world/layout.js';
@@ -67,6 +68,7 @@ export class Game {
     this.pickups = new Pickups(this);
     this.gangCoverTaken = new Set();
     this.markers = new Markers(this.gl);
+    this.heli = new Helicopter(this);
     this.missions = new MissionSystem(this);
     this.tags = new OrchidTags(this);
     this.shops = new Shops(this);
@@ -239,6 +241,7 @@ export class Game {
     for (const c of [...this.peds.list]) if (c.kind === 'cop') this.peds.remove(c);
     for (const v of [...this.police.units]) this.vehicles.remove(v);
     this.camCtl.face(Math.PI);
+    this.heli.active = false;
     p.safeTimer = 2;
     this.failState = null;
     this.emit('respawn', { kind });
@@ -319,6 +322,7 @@ export class Game {
     this.entry.seq = null;
     this.failState = null;
     this.wanted.clear();
+    this.heli.active = false;
     for (const c of [...this.peds.list]) if (c.kind !== 'civ') this.peds.remove(c);
     this.controlsOn = true;
     this.timeScale = 1;
@@ -367,6 +371,7 @@ export class Game {
     if (!this.entry.busy) this.arsenal.update(dt, input, this.controlsOn && !this.failState);
     // Screenshot scenes: scripted driving and firing.
     if (this.autoDrive && p.vehicle) this.autoDrive(dt);
+    this.autoPolice?.(dt);
     if (this.autoFire) this.autoShoot(dt);
     p.updateAnim(dt);
     p.safeTimer = Math.max(0, (p.safeTimer ?? 0) - dt);
@@ -427,6 +432,7 @@ export class Game {
     for (const q of this.peds.list) if (q.weapon && !q.hidden && Math.hypot(q.x - cx, q.z - cz) < 90) this.combat.queueWeapon(r, q);
     this.combat.queue(r);
     this.pickups.queue(r, this.env.night);
+    this.heli.queue(r);
     this.fx.lights.queue(r);
     r.addTransparent(() => this.fx.decals.draw(r));
     // Glowing markers: missions, save point, shops and the waypoint beam.
