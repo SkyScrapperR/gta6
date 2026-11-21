@@ -260,7 +260,7 @@ void main() {
     float nl = max(dot(n, l), 0.0);
     vec3 h = safeNormalize(l + V);
     float sp = pow(max(dot(n, h), 0.0), gloss) * spec * (gloss + 8.0) / 30.0;
-    col += min(uLCol[i].rgb * att * (albedo * (nl * 0.85 + 0.15) + vec3(sp)), vec3(4.0));
+    col += min(uLCol[i].rgb * att * (albedo * (nl * 0.85 + 0.15) + vec3(sp)), vec3(1.2));
   }
 
   // Environment reflection (glass, paint, wet ground).

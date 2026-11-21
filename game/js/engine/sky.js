@@ -25,7 +25,7 @@ export class Environment {
     this.hour = 18.0;
     this.rain = 0;
     this.targetRain = 0;
-    this.fogDensityCap = 0.0016;
+    this.fogDensityCap = 0.0011;
     this.update(0);
   }
 
@@ -56,12 +56,12 @@ export class Environment {
     this.saturation = lerp(a[10], b[10], t);
     this.night = Environment.nightOf(h);
 
-    // Sun path: rises in the east (+X), sets in the west over the sea, tilted south.
+    // Sun path: rises in the east (+X), sets in the west, tilted south (+Z) over the sea.
     const dayT = (h - 6.0) / 12.8;
     const ang = dayT * Math.PI;
-    const sun = v3norm([Math.cos(ang), Math.sin(ang) * 0.92, -0.38]);
+    const sun = v3norm([Math.cos(ang), Math.sin(ang) * 0.92, 0.38]);
     const moonAng = ((h + 12 - 6.5) / 12.5) * Math.PI;
-    const moon = v3norm([Math.cos(moonAng) * 0.8, Math.max(0.25, Math.sin(moonAng)) * 0.9, 0.42]);
+    const moon = v3norm([Math.cos(moonAng) * 0.8, Math.max(0.25, Math.sin(moonAng)) * 0.9, -0.42]);
     this.sunDirTrue = sun;
     this.moonDir = moon;
     const sunUp = sun[1] > 0.02;
@@ -86,7 +86,7 @@ export class Environment {
       this.fogColor = grey(this.fogColor).map((c) => c * (1 - 0.3 * r));
       this.glow = this.glow.map((c) => c * (1 - 0.7 * r));
     }
-    const baseDensity = 0.0009 + this.night * 0.0003;
+    const baseDensity = 0.00045 + this.night * 0.0002;
     this.fogDensity = clamp(baseDensity * (1 + r * 1.2), 0, this.fogDensityCap);
     this.fogHeight = 60;
     this.wet = clamp(r * 1.4, 0, 1);
