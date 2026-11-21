@@ -6,7 +6,7 @@
 import { bezier } from '../world/roads.js';
 import { clamp, wrapAngle, makeRng } from '../core/math.js';
 
-const TYPES = [['merpati', 5], ['kancil', 4], ['taxi', 3], ['bajak', 2], ['vesper', 1], ['bison', 1]];
+const TYPES = [['merpati', 5], ['kancil', 4], ['motor', 4], ['taxi', 3], ['angkot', 2], ['bajak', 2], ['vesper', 1], ['bison', 1]];
 
 function pickType(rng) {
   const total = TYPES.reduce((s, t) => s + t[1], 0);

@@ -110,6 +110,30 @@ const DEFS = {
       b.paint(hex('#f2f0e6'), MAT.CLOTH).box(1.6, 0.25, 0, 0.6, 0.12, 1.8);
     },
   },
+  warung: {
+    // Street-food cart: wooden body, glass display case, bicycle wheels, a striped umbrella and stools.
+    r: 0.9, h: 2.6,
+    build(b) {
+      b.paint(hex('#8a5a32'), MAT.WOOD).bevelBox(0, 0.72, 0, 1.9, 0.7, 0.8, 0.04);
+      b.paint(hex('#d8452a'), MAT.PAINT).box(0, 0.62, 0.41, 1.86, 0.3, 0.02);
+      b.paint(hex('#c9e2ea'), MAT.GLASS).box(0, 1.28, 0, 1.6, 0.42, 0.6);
+      b.paint(hex('#3b3f46'), MAT.METAL).box(0, 1.5, 0, 1.66, 0.04, 0.66);
+      b.paint(hex('#fff1c9'), MAT.LAMP, 0.9).box(0, 1.46, 0, 1.2, 0.03, 0.4);
+      for (const z of [-0.42, 0.42]) b.wheel(-0.55, 0.32, z, 0.32, 0.05, [0.08, 0.08, 0.08], [0.7, 0.72, 0.75], 6);
+      b.paint(hex('#3b3f46'), MAT.METAL).limb(0.95, 0.9, 0, 1.4, 0.95, 0, 0.02, 0.02, 6).cylinder(0.85, 0.0, 0, 0.03, 0.03, 0.4, 6);
+      b.paint(hex('#eeeeee'), MAT.METAL).cylinder(0.2, 1.5, 0, 0.03, 0.03, 1.2, 6);
+      // Umbrella: alternating red and white panels.
+      for (let k = 0; k < 8; k++) {
+        const a0 = (k / 8) * Math.PI * 2, a1 = ((k + 1) / 8) * Math.PI * 2;
+        b.paint(k % 2 ? hex('#f4efe2') : hex('#d8302a'), MAT.CLOTH);
+        const p0 = [0.2, 2.95, 0], p1 = [0.2 + Math.cos(a0) * 1.5, 2.45, Math.sin(a0) * 1.5], p2 = [0.2 + Math.cos(a1) * 1.5, 2.45, Math.sin(a1) * 1.5];
+        b.facingTri(b.vertex(...p0, 0, 1, 0), b.vertex(...p1, 0, 1, 0), b.vertex(...p2, 0, 1, 0));
+        b.facingTri(b.vertex(...p0, 0, -1, 0), b.vertex(...p1, 0, -1, 0), b.vertex(...p2, 0, -1, 0));
+      }
+      b.paint(hex('#2a7ad8'), MAT.PLAIN);
+      for (const [x, z] of [[0.3, 0.95], [-0.5, 0.95]]) b.cylinder(x, 0, z, 0.17, 0.14, 0.42, 8);
+    },
+  },
   container: {
     r: 0, h: 2.6,
     build(b) {
@@ -209,7 +233,7 @@ const DEFS = {
 
 /** How far each prop type is drawn (metres): small clutter fades early, landmarks of the skyline never. */
 const RANGE = {
-  bench: 150, bin: 120, hydrant: 110, bollard: 140, crate: 160, barrel: 140, pallet: 140, umbrella: 220, planter: 180,
+  bench: 150, bin: 120, hydrant: 110, bollard: 140, crate: 160, barrel: 140, pallet: 140, umbrella: 220, planter: 180, warung: 240,
   tree: 380, palm: 450, lamp: 330, signal: 300, busstop: 220, container: 520, forklift: 200, rail: 260, fountain: 400,
   boat: 1200, crane: 1400,
 };

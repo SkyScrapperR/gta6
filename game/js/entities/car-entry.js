@@ -31,6 +31,7 @@ export class CarEntry {
   /** Character-local seat transform: rides the car body. */
   static seatMatrix(v) {
     const d = v.def;
+    if (d.scooter) return m4mul(v.model, m4mul(v.bones.subarray(0, 16), m4compose(0, 0.36, -0.28, 0, 0, 0)));
     const y0 = d.wheel * 0.9 + d.h / 2 + d.h / 2;
     const seat = m4compose(-0.38, y0 - 0.86 + v.susp + (d.truck ? 0.5 : 0) + (d.sport ? -0.12 : 0), -0.2 + (d.truck ? 1.9 : 0), 0, 0, 0);
     return m4mul(v.model, m4mul(v.bones.subarray(0, 16), seat));

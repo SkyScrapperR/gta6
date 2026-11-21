@@ -11,6 +11,9 @@ export const SHOP_NAMES = [
   'Warung Mentari', 'Apotek Sehat', 'Salon Melati', 'Toko Elektro Petir', 'Sate Pak Dodi', 'Roti Hangat', 'Optik Terang',
   'Batik Ayu', 'Kios Pulsa 88', 'Martabak Malam', 'Toko Kue Manis', 'Jus Tropika', 'Gelato Pantai', 'Studio Tato Naga',
 ];
+/** The neighbourhood regulars, twice as common on the street as the rest. */
+const REGULARS = ['Es Cendol', 'Kopi Senja', 'Bengkel Motor', 'Mie Ombak', 'Bakso Lestari', 'Laundry Kilau'];
+const STREET_NAMES = [...SHOP_NAMES, ...REGULARS];
 export const BRANDS = [
   ['NUSA FIZZ', 'the taste of the tide', '#ff3fa4', '#1a0b2e'],
   ['KILAU PHONE', 'brighter every day', '#2ff3e0', '#081a24'],
@@ -68,10 +71,29 @@ export function shopfronts(ctx, x0, z0, x1, z1, side, y = CURB) {
     b.box(0, -0.25, 1.0, w - 1.4, 0.45, 0.05);
     b.pop();
     // Name sign above the awning.
-    const name = rng.pick(SHOP_NAMES);
-    const fg = rng.pick(SIGN_FG);
-    const s = atlas.text(name, { fg, bg: rng.chance(0.5) ? '#14101c' : null, w: 512, h: 112 });
-    signs.quad(cx + d[0] * 0.35, y + 5.0, cz + d[1] * 0.35, FRONT_YAW[side], Math.min(w - 1.6, 7.5), 1.25, s, 2.2, rng.chance(0.3) ? 1 : 0);
+    // Each shop name has one sign style, so the sign atlas holds one texture per name. The two style
+    // draws are still made so the seeded city stays exactly as it was laid out.
+    const name = rng.pick(STREET_NAMES);
+    rng.pick(SIGN_FG);
+    rng.chance(0.5);
+    const ni = SHOP_NAMES.indexOf(name);
+    const fg = SIGN_FG[ni % SIGN_FG.length];
+    const s = atlas.text(name, { fg, bg: '#14101c', w: 512, h: 112 });
+    signs.quad(cx + d[0] * 0.35, y + 5.25, cz + d[1] * 0.35, FRONT_YAW[side], Math.min(w - 1.2, 8.6), 1.7, s, 2.2, rng.chance(0.3) ? 1 : 0);
+    // Every other shop also hangs a lit blade sign out over the sidewalk, readable down the street.
+    if (k % 2 === 0 && w > 6) {
+      const blade = s;
+      const e = (along ? x0 : z0) + w * k + 0.9;
+      const bx = (along ? e : faceX) + d[0] * 1.7, bz = (along ? faceZ : e) + d[1] * 1.7;
+      const yaw = Math.atan2(d[0], d[1]);
+      b.paint(hex('#2a2a2e'), MAT.METAL);
+      b.box(bx - d[0] * 0.85, y + 6.65, bz - d[1] * 0.85, along ? 0.1 : 1.8, 0.08, along ? 1.8 : 0.1);
+      b.box(bx, y + 6.2, bz, along ? 0.12 : 3.4, 0.86, along ? 3.4 : 0.12);
+      for (const turn of [Math.PI / 2, -Math.PI / 2]) {
+        const a = yaw + turn;
+        signs.quad(bx + Math.sin(a) * 0.07, y + 6.2, bz + Math.cos(a) * 0.07, a, 3.2, 0.7, blade, 2.4);
+      }
+    }
     if (rng.chance(0.35)) ctx.neonLights.push([cx + d[0] * 2.2, y + 4.6, cz + d[1] * 2.2, hex(fg).map((c) => c * 0.5)]);
     ctx.shopLights.push([cx + d[0] * 2.5, y + 3.2, cz + d[1] * 2.5, warm]);
   }

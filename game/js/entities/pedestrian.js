@@ -4,6 +4,7 @@
 // The same Ped class also carries cops, gang members and story characters with scripted brains.
 
 import { Animator } from './animator.js';
+import { CarEntry } from './car-entry.js';
 import { LOOKS, randomLook } from './looks.js';
 import { clamp, damp, dampAngle, makeRng, m4compose } from '../core/math.js';
 import { PITCH, GRID } from '../world/layout.js';
@@ -441,6 +442,20 @@ export class PedSystem {
       m4compose(p.x, p.y, p.z, p.yaw, 0, 0, 1, 1, 1, p.model);
       renderer.draw(this.meshFor(p.meshKey), { model: p.model, bones: p.anim.bones, rim: p.kind === 'story' ? [1, 0.78, 0.5, 0.22 + 0.25 * night] : undefined });
       p.drawWeapon?.(renderer);
+    }
+    this.queueRiders(renderer, camX, camZ);
+  }
+
+  /** Riders on the scooters in traffic: a seated civilian per scooter, sharing one seated pose. */
+  queueRiders(renderer, camX, camZ) {
+    if (!this.riderAnim) {
+      this.riderAnim = new Animator(1);
+      this.riderAnim.pose({ t: 0, seated: 1, steer: 0 });
+    }
+    for (const v of this.world.vehicles.list) {
+      if (!v.def.scooter || v.driver !== 'npc' || v.wrecked) continue;
+      if (Math.abs(v.x - camX) > 160 || Math.abs(v.z - camZ) > 160) continue;
+      renderer.draw(this.meshFor(`civ${v.npcLook % 16}`), { model: CarEntry.seatMatrix(v), bones: this.riderAnim.bones });
     }
   }
 }

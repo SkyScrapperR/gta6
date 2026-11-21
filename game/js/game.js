@@ -88,7 +88,7 @@ export class Game {
 
   /** Decide which kerbside bays hold parked cars; cars are streamed in around the player. */
   spawnParkedCars() {
-    const types = ['kancil', 'merpati', 'merpati', 'taxi', 'bajak', 'kancil', 'vesper'];
+    const types = ['kancil', 'merpati', 'merpati', 'taxi', 'bajak', 'kancil', 'vesper', 'motor', 'motor', 'angkot'];
     this.parkSlots = [];
     for (const p of this.city.parking) {
       if (this.rng() > 0.42) continue;

@@ -16,9 +16,42 @@ function lights(b, d, front, sideX) {
   for (const s of [-1, 1]) b.bevelBox(s * sideX, d.h + 0.1, front + 0.01, 0.36, 0.13, 0.08, 0.03);
 }
 
+/**
+ * Motor Bebek: the step-through scooter that fills Selara Bay's streets. Body bone carries the frame,
+ * leg shield, seat, handlebars and lamps; bones FL and RL are the two wheels.
+ */
+function buildScooter(gl, d) {
+  const b = new MeshBuilder();
+  const trim = hex('#1a1b1e');
+  b.setBone(VB.BODY);
+  b.paint([1, 1, 1], MAT.PAINT);
+  b.bevelBox(0, 0.62, -0.38, 0.36, 0.34, 0.82, 0.12, { taperX: 0.85 }); // rear body under the seat
+  b.bevelBox(0, 0.72, 0.46, 0.34, 0.62, 0.16, 0.06, { taperZ: 0.7 }); // leg shield
+  b.bevelBox(0, 0.42, 0.14, 0.22, 0.08, 0.6, 0.03); // floorboard
+  b.bevelBox(0, 0.47, 0.66, 0.16, 0.16, 0.3, 0.05); // front mudguard
+  b.paint(hex('#151515'), MAT.CLOTH).bevelBox(0, 0.84, -0.36, 0.28, 0.08, 0.66, 0.04); // seat
+  b.paint(trim, MAT.METAL);
+  b.limb(0, 0.5, 0.62, 0, 1.06, 0.5, 0.03, 0.03, 6); // steering column
+  b.limb(-0.32, 1.06, 0.48, 0.32, 1.06, 0.48, 0.016, 0.016, 6); // handlebar
+  b.paint(hex('#222'), MAT.CLOTH).cylinder(-0.3, 1.06, 0.48, 0.022, 0.022, 0.001, 6);
+  b.paint([1, 1, 1], MAT.PAINT).bevelBox(0, 1.06, 0.53, 0.26, 0.12, 0.12, 0.04); // headset
+  b.paint([1.0, 0.97, 0.88], MAT.HEADLIGHT, 1.0).bevelBox(0, 1.04, 0.6, 0.12, 0.07, 0.03, 0.015);
+  b.paint([0.85, 0.08, 0.06], MAT.TAILLIGHT, 1.0).bevelBox(0, 0.74, -0.82, 0.16, 0.06, 0.04, 0.015);
+  b.paint(hex('#2a2a2e'), MAT.METAL).bevelBox(0.12, 0.38, -0.42, 0.08, 0.1, 0.5, 0.03); // engine and exhaust
+  b.limb(0.15, 0.35, -0.3, 0.17, 0.42, -0.78, 0.03, 0.03, 6);
+  for (const bone of [VB.FL, VB.RL]) {
+    b.setBone(bone);
+    b.wheel(0, 0, 0, d.wheel, 0.1, [0.05, 0.05, 0.055], [0.7, 0.72, 0.75], 5);
+  }
+  const data = b.build();
+  data.bounds = { min: [-0.5, 0, -1], max: [0.5, 1.3, 1], center: [0, 0.6, 0], radius: 1.2 };
+  return createMesh(gl, data);
+}
+
 /** Build the rigged mesh for a vehicle type. */
 export function buildVehicle(gl, type) {
   const d = VEHICLES[type];
+  if (d.scooter) return buildScooter(gl, d);
   const b = new MeshBuilder();
   const L = d.len, W = d.wid, H = d.h;
   const zf = L / 2, zr = -L / 2;
@@ -158,6 +191,15 @@ export function buildVehicle(gl, type) {
     for (const s of [-1, 1]) b.box(s * (W / 2 + 0.004), bodyY + 0.25, -0.9, 0.01, 0.02, 1.8);
     b.paint(glass, MAT.GLASS);
     for (const s of [-1, 1]) b.box(s * (W / 2 + 0.005), d.roof - 0.4, -1.1, 0.02, 0.45, 1.6);
+  }
+  if (d.angkot) {
+    // Angkot livery: white waist stripes, a roof rack and a lit route board over the windscreen.
+    b.paint([0.95, 0.95, 0.92], MAT.PAINT);
+    for (const s of [-1, 1]) b.box(s * (W / 2 + 0.008), bodyY + 0.05, -0.2, 0.01, 0.12, L - 0.8);
+    b.paint(hex('#3a3d44'), MAT.METAL);
+    for (const z of [-1.4, -0.6, 0.2]) b.box(0, d.roof + 0.12, z, W * 0.86, 0.04, 0.05);
+    for (const s of [-1, 1]) b.box(s * W * 0.43, d.roof + 0.14, -0.6, 0.04, 0.04, 1.8);
+    b.paint([1.0, 0.85, 0.3], MAT.NEON, 0.7).bevelBox(0, d.roof - 0.1, d.cabin[0] + 0.02, W * 0.6, 0.16, 0.05, 0.02);
   }
   // ---------------------------------------------------------------- doors (hinged at the front edge)
   if (!d.truck) {

@@ -221,11 +221,11 @@ export class Vehicle {
     m4compose(this.x, this.y, this.z, this.yaw, 0, 0, 1, 1, 1, this.model);
     const body = m4compose(0, this.susp, 0, 0, this.pitch, this.roll);
     this.bones.set(body, VB.BODY * 16);
-    const W = d.wid / 2 - (d.truck ? 0.25 : 0.14);
+    const W = d.scooter ? 0 : d.wid / 2 - (d.truck ? 0.25 : 0.14);
     const st = (this.steerAngle ?? 0);
     const wheels = [[VB.FL, W, d.axle[0], st], [VB.FR, -W, d.axle[0], st], [VB.RL, W, d.axle[1], 0], [VB.RR, -W, d.axle[1], 0]];
     for (const [bone, x, z, s] of wheels) this.bones.set(m4compose(x, d.wheel, z, s, this.wheelSpin, 0), bone * 16);
-    if (!d.truck) {
+    if (!d.truck && !d.scooter) {
       const [hl, hr] = doorHinge(this.type);
       this.bones.set(m4mul(body, m4compose(hl[0], hl[1], hl[2], -1.1 * this.doors[0])), VB.DOOR_L * 16);
       this.bones.set(m4mul(body, m4compose(hr[0], hr[1], hr[2], 1.1 * this.doors[1])), VB.DOOR_R * 16);

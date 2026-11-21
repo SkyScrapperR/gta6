@@ -1,6 +1,7 @@
-// Vehicle line-up as data: the seven original cars (Kancil compact, Merpati sedan, Selara Taxi, Vesper GT
-// coupe, Bajak van, Bison box truck, Garuda Patrol police car) with sizes and handling, the rig's bone
-// indices, and door hinge positions. Shared by physics, entry/exit and the mesh builder.
+// Vehicle line-up as data: nine original vehicles (Kancil compact, Merpati sedan, Selara Taxi, Vesper GT
+// coupe, Bajak van, Bison box truck, Motor Bebek scooter, Angkot Selara minibus, Garuda Patrol police
+// car) with sizes and handling, the rig's bone indices, and door hinge positions. Shared by physics,
+// entry/exit and the mesh builder.
 
 export const VB = { BODY: 0, FL: 1, FR: 2, RL: 3, RR: 4, DOOR_L: 5, DOOR_R: 6, ROTOR: 7, TAIL: 8 };
 
@@ -15,6 +16,8 @@ export const VEHICLES = {
   vesper: { name: 'Vesper GT', len: 4.6, wid: 1.98, h: 0.44, cabin: [0.3, -1.55], roof: 1.2, wheel: 0.34, axle: [1.45, -1.45], mass: 1250, accel: 13.5, top: 62, grip: 9.5, steer: 0.5, colors: ['#f2c41a', '#d02a2a', '#1a1a1e', '#e8e8e8'], sport: true },
   bajak: { name: 'Bajak', len: 4.9, wid: 1.96, h: 0.8, cabin: [1.35, -2.35], roof: 2.1, wheel: 0.36, axle: [1.65, -1.6], mass: 2100, accel: 6.5, top: 36, grip: 6.5, steer: 0.52, colors: ['#e8e8e8', '#3a6aa8', '#c0a060', '#5a8a5a'], van: true },
   bison: { name: 'Bison', len: 7.2, wid: 2.4, h: 1.0, cabin: [3.0, 1.6], roof: 2.85, wheel: 0.48, axle: [2.55, -2.3], mass: 6500, accel: 4.6, top: 30, grip: 6, steer: 0.46, colors: ['#c03a2a', '#3a3a6a', '#4a4a4a'], truck: true, size: 1.4 },
+  motor: { name: 'Motor Bebek', len: 1.85, wid: 0.72, h: 0.35, cabin: [0, 0], roof: 1.1, wheel: 0.26, axle: [0.64, -0.62], mass: 140, accel: 6.5, top: 22, grip: 7, steer: 0.7, colors: ['#d02a2a', '#1a1a1e', '#2a6ad8', '#f2f2f2', '#e8a020'], scooter: true },
+  angkot: { name: 'Angkot Selara', len: 4.2, wid: 1.72, h: 0.75, cabin: [1.2, -1.85], roof: 2.0, wheel: 0.3, axle: [1.35, -1.35], mass: 1500, accel: 6.5, top: 32, grip: 6.5, steer: 0.55, colors: ['#1aa0d8', '#e8c020', '#2a9a5a', '#d8502a'], van: true, angkot: true },
   patrol: { name: 'Garuda Patrol', len: 4.7, wid: 1.86, h: 0.64, cabin: [0.75, -1.15], roof: 1.53, wheel: 0.34, axle: [1.5, -1.5], mass: 1500, accel: 11, top: 54, grip: 9, steer: 0.55, colors: ['#f2f2f2'], police: true },
 };
 

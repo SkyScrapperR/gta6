@@ -46,11 +46,13 @@ void main() {
 `;
 
 export class SignAtlas {
-  constructor(size = 2048) {
+  constructor(size = 2048, height = size) {
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.canvas.height = size;
+    this.canvas.width = size;
+    this.canvas.height = height;
     this.ctx = this.canvas.getContext('2d');
     this.size = size;
+    this.height = height;
     this.x = 0;
     this.y = 0;
     this.rowH = 0;
@@ -64,6 +66,10 @@ export class SignAtlas {
       this.y += this.rowH + 2;
       this.rowH = 0;
     }
+    if (this.y + h > this.height && !this.warned) {
+      this.warned = true;
+      console.warn(`Sign atlas full at ${this.cache.size} signs; later signs will not show.`);
+    }
     const r = [this.x, this.y, w, h];
     this.x += w + 2;
     this.rowH = Math.max(this.rowH, h);
@@ -71,8 +77,8 @@ export class SignAtlas {
   }
 
   uv(r) {
-    const s = this.size;
-    return [r[0] / s, r[1] / s, (r[0] + r[2]) / s, (r[1] + r[3]) / s];
+    const s = this.size, t = this.height;
+    return [r[0] / s, r[1] / t, (r[0] + r[2]) / s, (r[1] + r[3]) / t];
   }
 
   /** A text sign: background panel (or transparent for neon), coloured lettering. Cached by key. */
@@ -145,8 +151,9 @@ export class SignBuilder {
    */
   quad(x, y, z, yaw, w, h, s, glow = 2, flicker = 0) {
     const cx = Math.cos(yaw), sx = Math.sin(yaw);
-    // Right vector as seen by a viewer standing in front of the sign.
-    const rx = -cx, rz = sx;
+    // Right vector as seen by a viewer standing in front of the sign (on the side of its normal
+    // (sin yaw, cos yaw), looking back along it), so the face is front-facing and reads left to right.
+    const rx = cx, rz = -sx;
     const base = this.v.length / 7;
     const [u0, v0, u1, v1] = s.uv;
     const pts = [

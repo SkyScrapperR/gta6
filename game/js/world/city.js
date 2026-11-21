@@ -16,6 +16,7 @@ import { CollisionWorld } from './collision.js';
 import { RoadGraph } from './roads.js';
 import { PropSystem } from './props.js';
 
+const WARUNG_NAMES = ['Es Cendol', 'Bakso Lestari', 'Mie Ombak', 'Sate Pak Dodi', 'Kopi Senja', 'Martabak Malam', 'Es Kelapa', 'Gorengan Bu Tini'];
 const HOTEL_NAMES = ['Hotel Pantai Indah', 'Selara Beach Resort', 'Ombak Suites', 'Hotel Kelapa', 'The Coral', 'Senja Bay Hotel', 'Pelangi Inn', 'Hotel Mutiara', 'Laguna Selara', 'Pasir Putih'];
 
 export class City {
@@ -24,7 +25,7 @@ export class City {
     this.col = new CollisionWorld();
     this.roads = new RoadGraph();
     this.props = new PropSystem(gl, this.col);
-    this.atlas = new SignAtlas(2048);
+    this.atlas = new SignAtlas(2048, 4096);
     this.signBuilder = new SignBuilder();
     this.signs = new SignRenderer(gl);
     this.water = new Water(gl, SEA_LEVEL);
@@ -352,6 +353,22 @@ export class City {
       const [x, z] = s.axis === 'x' ? [mid, s.fixed + (s.yaw === Math.PI ? 1.6 : -1.6)] : [s.fixed + (s.yaw === -Math.PI / 2 ? 1.6 : -1.6), mid];
       this.props.add('busstop', x, CURB, z, s.yaw + Math.PI);
       this.col.addBox(x - 1.9, z - 0.7, x + 1.9, z + 0.7, CURB + 2.6, { kind: 'busstop', ghost: true });
+    }
+    // Warung carts on the sidewalk, each with a hand-painted name board on its umbrella pole.
+    if (district !== 'docks') {
+      for (const [n, s] of sides.entries()) {
+        if ((i * 7 + j * 3 + n) % 3 !== 0) continue;
+        const u = s.a0 + 30 + ((i + j + n) % 2) * 26;
+        const off = 2.3;
+        const [x, z] = s.axis === 'x' ? [u, s.fixed + (s.yaw === Math.PI ? off : -off)] : [s.fixed + (s.yaw === -Math.PI / 2 ? off : -off), u];
+        const yaw = s.yaw + Math.PI;
+        this.props.add('warung', x, CURB, z, yaw + Math.PI / 2);
+        this.col.addBox(x - 1.1, z - 1.1, x + 1.1, z + 1.1, CURB + 1.6, { kind: 'warung', ghost: true });
+        const name = WARUNG_NAMES[(i * 5 + j * 11 + n) % WARUNG_NAMES.length];
+        const board = this.atlas.text(name, { fg: '#ffe9b0', bg: '#7a1e14', w: 320, h: 96 });
+        const fx = Math.sin(yaw), fz = Math.cos(yaw);
+        for (const [sgn, a] of [[1, yaw], [-1, yaw + Math.PI]]) this.signBuilder.quad(x + fx * 0.02 * sgn, CURB + 2.15, z + fz * 0.02 * sgn, a, 1.5, 0.45, board, 1.6);
+      }
     }
   }
 
