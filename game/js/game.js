@@ -12,6 +12,12 @@ import { CarEntry } from './entities/car-entry.js';
 import { PedSystem } from './entities/pedestrian.js';
 import { TrafficSystem } from './ai/traffic.js';
 import { WantedSystem, PoliceSystem } from './ai/police.js';
+import { Particles } from './fx/particles.js';
+import { Decals } from './fx/decals.js';
+import { FlashLights } from './fx/lights.js';
+import { Combat } from './combat/weapons.js';
+import { Arsenal } from './combat/arsenal.js';
+import { Pickups } from './combat/pickups.js';
 import { POINTS } from './world/layout.js';
 import { makeRng } from './core/math.js';
 
@@ -48,6 +54,12 @@ export class Game {
     this.traffic = new TrafficSystem(this);
     this.wanted = new WantedSystem(this);
     this.police = new PoliceSystem(this);
+    this.fx = { particles: new Particles(this.gl), decals: new Decals(this.gl), lights: new FlashLights() };
+    this.combat = new Combat(this);
+    this.arsenal = new Arsenal(this);
+    this.pickups = new Pickups(this);
+    this.gangCoverTaken = new Set();
+    this.placeWorldPickups();
     this.spawnParkedCars();
     this.player.place(POINTS.homecomingCar[0] - 3, 1009.5, Math.PI);
     this.camCtl.face(Math.PI);
@@ -81,6 +93,22 @@ export class Game {
         s.vehicle = null;
       }
     }
+  }
+
+  /** Health and armor around the city (respawning), outside hospital, safehouse, docks and parks. */
+  placeWorldPickups() {
+    const a = this.city.anchors;
+    const spots = [
+      ['health', a.hospital.respawn[0] + 4, a.hospital.respawn[1]],
+      ['armor', a.safehouse.door[0] - 6, a.safehouse.door[1] - 2],
+      ['health', 355, 350], ['armor', 650, 150], ['health', 860, 620], ['armor', 150, 850], ['health', 640, 920], ['armor', 920, 300],
+    ];
+    for (const [k, x, z] of spots) this.pickups.spawn(k, x, z, 50, { respawn: 60 });
+  }
+
+  addMoney(n) {
+    this.money = Math.max(0, this.money + n);
+    this.emit('money', { amount: n });
   }
 
   /** Busy streets right away (new game, title screen). */
@@ -137,7 +165,7 @@ export class Game {
   }
 
   onVehicleExplode(v) {
-    this.emit('explosion', { x: v.x, y: v.y + 1, z: v.z, v });
+    this.explosionFx(v.x, v.y + 0.8, v.z, v.def.truck ? 1.6 : 1.1);
     this.peds.panic(v.x, v.z, 45);
     if (v.lastDamager === 'player' || v === this.player.vehicle || Math.hypot(v.x - this.player.x, v.z - this.player.z) < 20) {
       this.wanted.crime(v.police ? 5 : 3);
@@ -154,10 +182,79 @@ export class Game {
     this.camera.addShake(Math.max(0, 1.2 - pd / 40));
   }
 
+  /** Fireball, smoke lit from inside, sparks, debris, scorch, light flash, shake and a moment of slow motion. */
+  explosionFx(x, y, z, scale = 1) {
+    this.fx.particles.explosion(x, y, z, scale);
+    this.fx.decals.scorch(x, this.city.groundAt(x, z), z);
+    this.fx.lights.add(x, y + 2, z, [40, 18, 6], 40 * scale, 1.2);
+    this.emit('explosion', { x, y, z, scale });
+    const pd = Math.hypot(this.player.x - x, this.player.z - z);
+    if (pd < 30) this.slowMo = Math.max(this.slowMo ?? 0, 0.6 * (1 - pd / 30));
+  }
+
   onArrest() {
-    if (!this.player.alive || this.cuffedT) return;
+    if (!this.player.alive) return;
     this.player.cuffed = 0.001;
+    if (this.player.vehicle) { this.player.vehicle.driver = null; this.player.vehicle = null; this.player.seat = 0; }
+    this.failState = { kind: 'cuffed', t: 0 };
     this.emit('busted');
+  }
+
+  onPlayerDeath() {
+    this.failState = { kind: 'flatlined', t: 0 };
+    this.emit('wasted');
+  }
+
+  /** After FLATLINED or CUFFED: hospital or police HQ, minus $100 (and ammo when arrested). */
+  respawn(kind) {
+    const a = this.city.anchors;
+    const p = this.player;
+    const spot = kind === 'cuffed' ? a.police.respawn : a.hospital.respawn;
+    if (p.vehicle) { p.vehicle.driver = null; p.vehicle = null; }
+    this.entry.seq = null;
+    p.place(spot[0], spot[1], Math.PI);
+    p.health = p.maxHealth;
+    p.seat = 0;
+    p.visible = true;
+    if (kind === 'cuffed') { p.armor = 0; this.arsenal.strip(); }
+    this.addMoney(-100);
+    this.wanted.clear();
+    for (const c of [...this.peds.list]) if (c.kind === 'cop') this.peds.remove(c);
+    for (const v of [...this.police.units]) this.vehicles.remove(v);
+    this.camCtl.face(Math.PI);
+    p.safeTimer = 2;
+    this.failState = null;
+    this.emit('respawn', { kind });
+  }
+
+  /** Smoke, fire and drift effects that vehicles emit every frame. */
+  vehicleFx(dt) {
+    const pt = this.fx.particles;
+    for (const v of this.vehicles.list) {
+      if (Math.abs(v.x - this.camera.pos[0]) > 160 || Math.abs(v.z - this.camera.pos[2]) > 160) continue;
+      const f = v.forward;
+      const hx = v.x + f[0] * (v.def.len / 2 - 0.6), hz = v.z + f[1] * (v.def.len / 2 - 0.6);
+      if (v.wrecked) {
+        if (v.wreckTimer < 25 && Math.random() < dt * 8) pt.fire(v.x, v.y + 1, v.z, 0.8);
+        if (Math.random() < dt * 4) pt.carSmoke(v.x, v.y + 1.6, v.z, true);
+      } else if (v.health < 350) {
+        if (Math.random() < dt * 20) pt.fire(hx, v.y + 1.1, hz, 0.7);
+        if (Math.random() < dt * 0.9) this.fx.lights.add(hx, v.y + 1.5, hz, [5, 2, 0.5], 8, 0.4);
+      } else if (v.health < 650) {
+        if (Math.random() < dt * 10) pt.carSmoke(hx, v.y + 1.1, hz, v.health < 500);
+      }
+      if (v.drifting || (v.handbrake && Math.abs(v.speed) > 6) || (v.braking && Math.abs(v.speed) > 14)) {
+        const r = v.right;
+        for (const s of [1, -1]) {
+          const wx = v.x - f[0] * 1.4 + r[0] * s * 0.8, wz = v.z - f[1] * 1.4 + r[1] * s * 0.8;
+          v.skidAcc = (v.skidAcc ?? 0) + dt;
+          if (v.skidAcc > 0.03) this.fx.decals.skid(wx, wz, v.y, f[0], f[1]);
+          if (Math.random() < dt * 18) pt.tyreSmoke(wx, v.y, wz);
+        }
+        if (v.skidAcc > 0.03) v.skidAcc = 0;
+        v.screech = true;
+      } else v.screech = false;
+    }
   }
 
   // ------------------------------------------------------------ frame
@@ -203,21 +300,39 @@ export class Game {
     } else if (!this.entry.busy) {
       const aiming = input.rightDown && this.controlsOn && p.alive;
       p.aim = aiming ? 1 : 0;
+      p.aimPitch = aiming ? -this.camCtl.pitch * 0.8 : 0;
       p.updateFoot(dt, input, this.camCtl.yaw, aiming, this.controlsOn);
     }
+    if (!this.entry.busy) this.arsenal.update(dt, input, this.controlsOn && !this.failState);
     p.updateAnim(dt);
-    this.city.roads.update(0);
+    p.safeTimer = Math.max(0, (p.safeTimer ?? 0) - dt);
+    // Death and arrest.
+    if (p.dead > 0 && !this.failState) this.onPlayerDeath();
+    if (this.failState) {
+      this.failState.t += dt;
+      if (this.failState.t > 4.5) this.respawn(this.failState.kind);
+    }
     this.traffic.update(dt);
     this.police.update(dt);
     this.streamParked(dt, this.camera.pos[0], this.camera.pos[2]);
     this.vehicles.update(dt);
     this.peds.update(dt);
     this.wanted.update(dt);
+    this.combat.update(dt);
+    this.pickups.update(dt);
+    this.vehicleFx(dt);
+    if (this.env.rain > 0.05) this.fx.particles.rain(this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], this.env.rain, dt);
+    this.fx.particles.update(dt);
+    this.fx.lights.update(dt);
     if (this.debugCam) this.camCtl.updateShot(dt, this.debugCam.pos, this.debugCam.target, this.debugCam.fov ?? 50);
     else if (v && !this.entry.busy) this.camCtl.updateCar(dt, look, v);
     else this.camCtl.updateFoot(dt, look, p.x, p.y, p.z, p.aim);
     this.city.update(dt, this.camera.pos[0], this.camera.pos[2], this.renderer.preset.draw);
+    this.onFrameEvents?.(this.events);
     this.events.length = 0;
+    // Slow motion after big explosions nearby; desaturated slow motion while FLATLINED.
+    this.slowMo = Math.max(0, (this.slowMo ?? 0) - dt * 0.8);
+    this.timeScale = this.failState?.kind === 'flatlined' ? 0.35 : 1 - Math.min(0.6, this.slowMo ?? 0);
   }
 
   render(dt) {
@@ -228,6 +343,15 @@ export class Game {
     this.vehicles.queue(r, this.env.night, cx, cz);
     this.peds.queue(r, this.env.night, cx, cz);
     this.player.queue(r, this.env.night);
+    this.combat.queueWeapon(r, this.player);
+    for (const q of this.peds.list) if (q.weapon && !q.hidden && Math.hypot(q.x - cx, q.z - cz) < 90) this.combat.queueWeapon(r, q);
+    this.combat.queue(r);
+    this.pickups.queue(r, this.env.night);
+    this.fx.lights.queue(r);
+    r.addTransparent(() => this.fx.decals.draw(r));
+    r.addTransparent(() => this.fx.particles.draw(r));
+    this.extraQueue?.(r);
+    r.post.desat = this.failState?.kind === 'flatlined' ? Math.min(1, this.failState.t / 1.5) : 0;
     r.render(dt);
   }
 }

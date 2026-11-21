@@ -206,9 +206,7 @@ export class SignRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.tex);
     gl.uniform1i(p.u('uAtlas'), 0);
-    gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
     gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_INT, 0);
-    gl.enable(gl.CULL_FACE);
   }
 }

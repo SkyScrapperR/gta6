@@ -184,7 +184,7 @@ export class Player {
     renderer.draw(this.mesh, {
       model: this.vehicle ? CarEntry.seatMatrix(this.vehicle) : this.matrix(),
       bones: this.anim.bones,
-      rim: [0.35, 0.95, 0.9, 0.25 + night * 0.9],
+      rim: [0.35, 0.95, 0.9, 0.06 + night * 0.22],
     });
   }
 
