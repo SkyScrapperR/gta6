@@ -71,14 +71,14 @@ export async function runShot(app, name) {
   } else if (name === 'cutscene') {
     midGame(app);
     app.setState('playing');
-    g.env.hour = 17.35;
+    g.env.hour = 17.95;
     g.populate(16, 24);
     const lin = g.missions.stageGarage();
     g.dialogue.actors = { lin, kai: g.player };
     const sides = [1, -1].map((sd) => [sd, twoShot({ ...g.player }, { ...lin }, sd).pos[2]]);
-    const side = sides[0][1] < sides[1][1] ? sides[0][0] : sides[1][0];
+    const side = sides[0][1] > sides[1][1] ? sides[0][0] : sides[1][0];
     void openSide;
-    g.cinematic = { cam: { ...twoShot(g.player, lin, side, 3.4, 1.5, 0.5), fov: 44 }, portrait: 'lin', skipHint: false };
+    g.cinematic = { cam: { ...twoShot(g.player, lin, side, 3.2, 1.35, 0.3), fov: 46 }, portrait: 'lin', skipHint: false };
     g.dialogue.say([['lin', "Viktor's nephew parks a yellow Vesper GT outside Bank Samudra like the street is his.", 30]]);
     g.controlsOn = false;
     await wait(app, 3);

@@ -298,9 +298,9 @@ export class MissionSystem {
   linShots(lin, lines, extra = []) {
     const w = this.w;
     const kai = w.player;
-    // Frame from the street side: the open bay, lifted cars and the neon sign sit behind the pair.
+    // Frame from inside the garage looking out of the open bay: street, palms and the low sun behind them.
     const sides = [1, -1].map((sd) => [sd, twoShot({ ...kai }, { ...lin }, sd).pos[2]]);
-    const side = sides[0][1] < sides[1][1] ? sides[0][0] : sides[1][0];
+    const side = sides[0][1] > sides[1][1] ? sides[0][0] : sides[1][0];
     void openSide;
     return [
       { dur: 3, lines: lines.slice(0, 2), cam: (k) => { const s = twoShot(kai, lin, side, 3.6 - k * 0.4, 1.55, -0.2); return { ...s, fov: 42 }; } },

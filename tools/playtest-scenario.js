@@ -128,6 +128,7 @@ async (page) => {
   /** Aim at a ped with the right mouse button and shoot with the left until it is down. */
   const shootDown = async (pedIndexExpr, ms = 20000) => {
     const end = Date.now() + ms;
+    let hidden = 0;
     await page.mouse.move(640, 360);
     await page.mouse.down({ button: 'right' });
     while (Date.now() < end) {
@@ -139,10 +140,25 @@ async (page) => {
         const q = list[0];
         if (!q) return null;
         const cam = g.camera.pos;
-        return { vis: seen(q), yaw: Math.atan2(q.x - p.x, q.z - p.z), pitch: Math.atan2(q.y + 1.2 - cam[1], Math.hypot(q.x - cam[0], q.z - cam[2])), d: Math.hypot(q.x - p.x, q.z - p.z), x: q.x, z: q.z };
+        return { vis: seen(q), yaw: Math.atan2(q.x - cam[0], q.z - cam[2]), pitch: Math.atan2(q.y + 1.2 - cam[1], Math.hypot(q.x - cam[0], q.z - cam[2])), d: Math.hypot(q.x - p.x, q.z - p.z), x: q.x, z: q.z };
       }, pedIndexExpr);
       if (!t) break;
-      if (t.d > 26 || !t.vis) { await page.mouse.up({ button: 'right' }); await walkTo(t.x, t.z, { r: t.vis ? 14 : 5, ms: 5000, sprint: true }); await page.mouse.down({ button: 'right' }); continue; }
+      hidden = t.vis ? 0 : hidden + 1;
+      if (hidden > 25) {
+        // Reposition to a vantage point that can see the target, then keep aiming for real.
+        await ev(([tx, tz]) => {
+          const g = window.__app.game, col = g.city.col;
+          for (let r = 9; r <= 18; r += 3) for (let a = 0; a < 6.28; a += 0.4) {
+            const x = tx + Math.cos(a) * r, z = tz + Math.sin(a) * r;
+            const res = col.resolveCircle(x, z, 0.4, 0.15, 1.8);
+            if (res.hit) continue;
+            if (col.lineClear(x, 1.6, z, tx, 1.3, tz)) { g.player.place(x, z, Math.atan2(tx - x, tz - z)); g.camCtl.face(Math.atan2(tx - x, tz - z)); return; }
+          }
+        }, [t.x, t.z]);
+        hidden = 0;
+        continue;
+      }
+      if (t.d > 45 || !t.vis) { await page.mouse.up({ button: 'right' }); await walkTo(t.x, t.z, { r: t.vis ? 14 : 5, ms: 5000, sprint: true }); await page.mouse.down({ button: 'right' }); continue; }
       await look(t.yaw, t.pitch * 0.9);
       await page.mouse.down();
       await sleep(90);
@@ -214,6 +230,11 @@ async (page) => {
     await driveTo(garage.bay[0], garage.bay[1], { r: 4.5 });
     await until((s) => s.stars === 0, 60000, 'lost the cops by breaking line of sight');
     step('wanted level lost by breaking line of sight');
+    for (let k = 0; k < 3; k++) {
+      const s = await S();
+      if (s.passed >= 2 || s.cine || !s.veh) break;
+      if (Math.hypot(s.veh.x - garage.bay[0], s.veh.z - garage.bay[1]) > 5) await driveTo(garage.bay[0], garage.bay[1], { r: 4.5 });
+    }
     await until((s) => s.passed >= 2 || s.cine, 15000, 'Vesper delivered');
     await skipCutscenes();
     await until((s) => s.passed >= 2, 8000, 'Yellow Fever passed');
@@ -237,7 +258,7 @@ async (page) => {
     await tp(cafe.front[0] + 40, cafe.front[1] - 4, -Math.PI / 2);
     await walkTo(cafe.front[0] + 22, cafe.front[1] - 4, { sprint: true, r: 2 });
     await ev(() => { const g = window.__app.game; g.player.armor = 100; g.arsenal.owned.pistol.ammo = 200; });
-    await shootDown('gang', 60000);
+    await shootDown('gang', 90000);
     await until((s) => /Grab the cash bag/.test(s.obj), 8000, 'all four enforcers defeated by aiming and shooting');
     step('won the firefight with real aiming and shooting');
     const bag = await ev(() => window.__app.game.missions.target);

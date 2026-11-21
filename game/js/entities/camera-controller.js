@@ -48,8 +48,9 @@ export class CameraController {
     this.pitch = clamp(this.pitch - look[1], -1.2, 0.85);
     this.aimBlend = damp(this.aimBlend, aim, 12, dt);
     const a = this.aimBlend;
-    const dist = lerp(4.6, 2.9, a);
-    const side = lerp(0.35, 0.72, a);
+    // Aiming tightens over the right shoulder with Kai on the left third (~15-20% of the frame).
+    const dist = lerp(4.6, 3.8, a);
+    const side = lerp(0.35, 1.25, a);
     const height = lerp(1.75, 1.6, a);
     const fwd = [Math.sin(this.yaw), Math.cos(this.yaw)];
     const right = [-fwd[1], fwd[0]];

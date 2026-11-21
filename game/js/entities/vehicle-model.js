@@ -17,7 +17,7 @@ export const VEHICLES = {
   kancil: { name: 'Kancil', len: 3.7, wid: 1.66, h: 0.62, cabin: [0.55, -1.25], roof: 1.55, wheel: 0.3, axle: [1.2, -1.2], mass: 950, accel: 7.5, top: 36, grip: 7.5, steer: 0.62, colors: ['#e8d24a', '#e05a3a', '#4aa0e0', '#f2f2f2', '#9ae06a'] },
   merpati: { name: 'Merpati', len: 4.55, wid: 1.82, h: 0.64, cabin: [0.75, -1.15], roof: 1.52, wheel: 0.33, axle: [1.45, -1.45], mass: 1350, accel: 8.5, top: 45, grip: 8, steer: 0.56, colors: ['#3a5a8a', '#c03a3a', '#2a2a2e', '#d8d8d8', '#6a6a72', '#2a6a4a', '#8a6a3a'] },
   taxi: { name: 'Selara Taxi', len: 4.55, wid: 1.82, h: 0.64, cabin: [0.75, -1.15], roof: 1.52, wheel: 0.33, axle: [1.45, -1.45], mass: 1350, accel: 8.5, top: 44, grip: 8, steer: 0.56, colors: ['#18b8ae'], taxi: true },
-  vesper: { name: 'Vesper GT', len: 4.5, wid: 1.96, h: 0.5, cabin: [0.35, -1.1], roof: 1.3, wheel: 0.34, axle: [1.45, -1.45], mass: 1250, accel: 13.5, top: 62, grip: 9.5, steer: 0.5, colors: ['#f2c41a', '#d02a2a', '#1a1a1e', '#e8e8e8'], sport: true },
+  vesper: { name: 'Vesper GT', len: 4.6, wid: 1.98, h: 0.44, cabin: [0.3, -1.55], roof: 1.2, wheel: 0.34, axle: [1.45, -1.45], mass: 1250, accel: 13.5, top: 62, grip: 9.5, steer: 0.5, colors: ['#f2c41a', '#d02a2a', '#1a1a1e', '#e8e8e8'], sport: true },
   bajak: { name: 'Bajak', len: 4.9, wid: 1.96, h: 0.8, cabin: [1.35, -2.35], roof: 2.1, wheel: 0.36, axle: [1.65, -1.6], mass: 2100, accel: 6.5, top: 36, grip: 6.5, steer: 0.52, colors: ['#e8e8e8', '#3a6aa8', '#c0a060', '#5a8a5a'], van: true },
   bison: { name: 'Bison', len: 7.2, wid: 2.4, h: 1.0, cabin: [3.0, 1.6], roof: 2.85, wheel: 0.48, axle: [2.55, -2.3], mass: 6500, accel: 4.6, top: 30, grip: 6, steer: 0.46, colors: ['#c03a2a', '#3a3a6a', '#4a4a4a'], truck: true, size: 1.4 },
   patrol: { name: 'Garuda Patrol', len: 4.7, wid: 1.86, h: 0.64, cabin: [0.75, -1.15], roof: 1.53, wheel: 0.34, axle: [1.5, -1.5], mass: 1500, accel: 11, top: 54, grip: 9, steer: 0.55, colors: ['#f2f2f2'], police: true },
@@ -64,7 +64,9 @@ export function buildVehicle(gl, type) {
     const y0 = bodyY + H / 2;
     const roofY = d.roof;
     const lean = d.sport ? 0.55 : d.van ? 0.25 : 0.42;
-    const roofF = cf - (roofY - y0) * lean * 1.4, roofB = cb + (roofY - y0) * lean * (d.van ? 0.2 : 0.9);
+    // Sports coupe: steeply raked windscreen, short roof, long shallow fastback.
+    const roofF = d.sport ? cf - 0.6 : cf - (roofY - y0) * lean * 1.4;
+    const roofB = d.sport ? cb + 0.95 : cb + (roofY - y0) * lean * (d.van ? 0.2 : 0.9);
     const rw = W * (d.van ? 0.94 : 0.82);
     b.paint([1, 1, 1], paintMat).bevelBox(0, roofY, (roofF + roofB) / 2, rw, 0.08, roofF - roofB, 0.04);
     // Pillars.
@@ -79,8 +81,17 @@ export function buildVehicle(gl, type) {
     b.push().transform(0, (y0 + roofY) / 2, (cf + roofF) / 2, 0, -Math.atan2(cf - roofF, roofY - y0), 0).box(0, 0, 0, W * 0.84, wsLen, 0.04).pop();
     const rwLen = Math.hypot(roofY - y0, roofB - cb);
     b.push().transform(0, (y0 + roofY) / 2, (cb + roofB) / 2, 0, Math.atan2(roofB - cb, roofY - y0), 0).box(0, 0, 0, W * 0.84, rwLen, 0.04).pop();
+    // Coupe side glass: one tinted trapezoid per side following the roofline.
+    if (d.sport) {
+      for (const s of [-1, 1]) {
+        const x0 = s * W * 0.45, x1 = s * rw * 0.49;
+        const q = [[x0, y0, cb], [x0, y0, cf], [x1, roofY - 0.02, roofF], [x1, roofY - 0.02, roofB]];
+        b.quad(q[0], q[1], q[2], q[3]);
+        b.quad(q[3], q[2], q[1], q[0]);
+      }
+    }
     // Rear side glass (fixed); the front side windows are rolled down so the driver shows.
-    for (const s of [-1, 1]) {
+    for (const s of d.sport ? [] : [-1, 1]) {
       b.push().transform(s * W * 0.45, (y0 + roofY) / 2, (cb + (cf + cb) / 2 - 0.15) / 2, 0, 0, 0);
       b.box(0, 0, 0, 0.03, roofY - y0 - 0.06, Math.abs((cf + cb) / 2 - 0.15 - cb) - 0.1);
       b.pop();
@@ -92,9 +103,10 @@ export function buildVehicle(gl, type) {
       b.bevelBox(s * 0.38, y0 - 0.45, -0.15, 0.5, 0.14, 0.55, 0.05);
       b.bevelBox(s * 0.38, (y0 - 0.45 + backTop) / 2, -0.5, 0.5, backTop - y0 + 0.45, 0.14, 0.05);
     }
-    b.paint(hex('#1e1e22'), MAT.PLAIN).bevelBox(0, y0 + 0.28, cf - 0.18, W * 0.86, 0.3, 0.45, 0.06);
+    const dash = d.sport ? -0.45 : 0;
+    b.paint(hex('#1e1e22'), MAT.PLAIN).bevelBox(0, y0 + 0.28 + dash * 0.5, cf - 0.18 + dash * 1.2, W * 0.86, 0.3, 0.45, 0.06);
     // Right-hand drive (traffic keeps left): the wheel sits on the car's right, body -X.
-    b.paint(hex('#111'), MAT.PLAIN).push().transform(-0.38, y0 + 0.4, cf - 0.5, 0, -1.0, 0).cylinder(0, 0, 0, 0.19, 0.19, 0.03, 12, { bottom: true }).pop();
+    b.paint(hex('#111'), MAT.PLAIN).push().transform(-0.38, y0 + 0.4 + dash * 0.3, cf - 0.5 + dash, 0, -1.0, 0).cylinder(0, 0, 0, 0.19, 0.19, 0.03, 12, { bottom: true }).pop();
   }
   // ---------------------------------------------------------------- front, rear, trim
   b.paint(trim, MAT.PLAIN);

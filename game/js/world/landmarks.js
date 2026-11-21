@@ -56,6 +56,8 @@ function garage(ctx, L) {
   // Neon sign over the bay.
   signAt(ctx, "LIN'S GARAGE", cx, Y + h - 0.9, z0 - 0.02, Math.PI, 16, 2.6, { fg: '#ff7a3a', font: '900 96px "Arial Black", sans-serif', flicker: true }, 3.2);
   ctx.neonLights.push([cx, Y + h - 0.6, z0 - 1.5, [1.0, 0.45, 0.15]]);
+  // Palms across the street, framed by the open bay.
+  for (const dx of [-12, -4, 4, 12]) ctx.props.add('palm', cx + dx, Y, L.z0 - 18.8, dx, 1.1);
   // Fill the rest of the lot with ordinary Kemuning buildings.
   ctx.fill(L.x0, z1 + 6, L.x1, L.z1, ['w', 'e', 's']);
   ctx.fill(L.x0, L.z0, x0 - 4, z1 + 2, ['w', 'n']);

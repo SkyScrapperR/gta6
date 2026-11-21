@@ -32,7 +32,7 @@ export class CarEntry {
   static seatMatrix(v) {
     const d = v.def;
     const y0 = d.wheel * 0.9 + d.h / 2 + d.h / 2;
-    const seat = m4compose(-0.38, y0 - 0.86 + v.susp + (d.truck ? 0.5 : 0), -0.2 + (d.truck ? 1.9 : 0), 0, 0, 0);
+    const seat = m4compose(-0.38, y0 - 0.86 + v.susp + (d.truck ? 0.5 : 0) + (d.sport ? -0.12 : 0), -0.2 + (d.truck ? 1.9 : 0), 0, 0, 0);
     return m4mul(v.model, m4mul(v.bones.subarray(0, 16), seat));
   }
 
