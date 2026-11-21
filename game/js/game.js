@@ -18,6 +18,7 @@ import { FlashLights } from './fx/lights.js';
 import { Combat } from './combat/weapons.js';
 import { Arsenal } from './combat/arsenal.js';
 import { Pickups } from './combat/pickups.js';
+import { Notifications } from './ui/notifications.js';
 import { POINTS } from './world/layout.js';
 import { makeRng } from './core/math.js';
 
@@ -39,6 +40,9 @@ export class Game {
     this.money = 0;
     this.stats = { kills: 0, carsStolen: 0, missions: 0, tags: 0, timePlayed: 0, shots: 0, copsKilled: 0 };
     this.fps = 60;
+    this.notes = new Notifications();
+    this.waypoint = null;
+    this.cinematic = null;
   }
 
   async load(onProgress) {
@@ -269,12 +273,39 @@ export class Game {
     if (v && !v.mission?.locked) this.entry.enter(p, v, (car) => this.onCarjack(car));
   }
 
+  /** Fresh state for New Game / Continue (the city and its systems stay loaded). */
+  resetForNewGame() {
+    const p = this.player;
+    this.money = 0;
+    this.arsenal.owned = { fists: { clip: 0, ammo: 0 } };
+    this.arsenal.current = 'fists';
+    p.health = p.maxHealth;
+    p.armor = 0;
+    p.dead = 0;
+    p.cuffed = 0;
+    p.visible = true;
+    p.vehicle = null;
+    p.seat = 0;
+    this.entry.seq = null;
+    this.failState = null;
+    this.wanted.clear();
+    for (const c of [...this.peds.list]) if (c.kind !== 'civ') this.peds.remove(c);
+    this.controlsOn = true;
+    this.timeScale = 1;
+    this.waypoint = null;
+    this.cinematic = null;
+    this.env.hour = 17.4;
+    Object.assign(this.stats, { kills: 0, carsStolen: 0, missions: 0, tags: 0, timePlayed: 0, shots: 0, copsKilled: 0 });
+    this.missions?.reset();
+    this.tags?.reset();
+    p.place(POINTS.ferryArrive[0], POINTS.ferryArrive[1], Math.PI);
+    this.camCtl.face(Math.PI);
+  }
+
   update(dt) {
     const input = this.input;
     this.time += dt;
     this.stats.timePlayed += dt;
-    this.env.hour = (this.env.hour + dt * this.clockRate) % 24;
-    this.env.update(dt);
     const p = this.player;
     const look = input.look();
     if (this.controlsOn && input.pressed('KeyF')) this.handleUse();
@@ -312,27 +343,42 @@ export class Game {
       this.failState.t += dt;
       if (this.failState.t > 4.5) this.respawn(this.failState.kind);
     }
+    this.missions?.update(dt);
+    this.cutscene?.update(dt);
+    this.tags?.update(dt);
+    this.heli?.update(dt);
+    this.music?.update(dt, this);
+    this.updateWorld(dt, false, look, v);
+    this.slowMo = Math.max(0, (this.slowMo ?? 0) - dt * 0.8);
+    this.timeScale = this.failState?.kind === 'flatlined' ? 0.35 : 1 - Math.min(0.6, this.slowMo ?? 0);
+  }
+
+  /** Everything that runs without player control too (title screen, cutscenes). */
+  updateWorld(dt, title = false, look = [0, 0], v = null) {
+    const p = this.player;
+    this.env.hour = (this.env.hour + dt * this.clockRate) % 24;
+    this.env.update(dt);
     this.traffic.update(dt);
-    this.police.update(dt);
+    if (!title) this.police.update(dt);
     this.streamParked(dt, this.camera.pos[0], this.camera.pos[2]);
     this.vehicles.update(dt);
     this.peds.update(dt);
-    this.wanted.update(dt);
-    this.combat.update(dt);
-    this.pickups.update(dt);
+    if (!title) {
+      this.wanted.update(dt);
+      this.combat.update(dt);
+      this.pickups.update(dt);
+    }
     this.vehicleFx(dt);
     if (this.env.rain > 0.05) this.fx.particles.rain(this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], this.env.rain, dt);
     this.fx.particles.update(dt);
     this.fx.lights.update(dt);
-    if (this.debugCam) this.camCtl.updateShot(dt, this.debugCam.pos, this.debugCam.target, this.debugCam.fov ?? 50);
+    if (this.cinematic?.cam) this.camCtl.updateShot(dt, this.cinematic.cam.pos, this.cinematic.cam.target, this.cinematic.cam.fov ?? 45, this.cinematic.cam.smooth ?? 0);
+    else if (this.debugCam) this.camCtl.updateShot(dt, this.debugCam.pos, this.debugCam.target, this.debugCam.fov ?? 50);
     else if (v && !this.entry.busy) this.camCtl.updateCar(dt, look, v);
     else this.camCtl.updateFoot(dt, look, p.x, p.y, p.z, p.aim);
     this.city.update(dt, this.camera.pos[0], this.camera.pos[2], this.renderer.preset.draw);
     this.onFrameEvents?.(this.events);
     this.events.length = 0;
-    // Slow motion after big explosions nearby; desaturated slow motion while FLATLINED.
-    this.slowMo = Math.max(0, (this.slowMo ?? 0) - dt * 0.8);
-    this.timeScale = this.failState?.kind === 'flatlined' ? 0.35 : 1 - Math.min(0.6, this.slowMo ?? 0);
   }
 
   render(dt) {

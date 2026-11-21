@@ -1,0 +1,130 @@
+// Full-screen map (M): the pre-rendered city with district names, landmark icons, a legend, the
+// player, police and mission blips. Left click sets a waypoint (shown as a beam in the world and a
+// GPS route on the minimap); right click clears it. Mouse wheel zooms.
+
+import { MAP_MIN, MAP_SIZE, drawIcon } from './minimap.js';
+import { DISTRICTS, LANDMARKS, PITCH } from '../world/layout.js';
+
+const LABELS = [
+  ['downtown', 5.5, 3.8], ['midtown', 4.5, 7.5], ['midtown', 7.4, 1.0], ['residential', 1.5, 4.6], ['docks', 9.0, 4.6], ['beach', 5.0, 10.35], ['park', 3.5, 4.5],
+];
+
+export class BigMap {
+  constructor(world, hud) {
+    this.world = world;
+    this.hud = hud;
+    this.zoom = 1;
+    this.open = false;
+    this.canvas = document.getElementById('hud');
+    addEventListener('mousedown', (e) => this.onClick(e));
+    addEventListener('wheel', (e) => { if (this.open) this.zoom = Math.max(0.7, Math.min(2.5, this.zoom * (e.deltaY > 0 ? 0.9 : 1.1))); });
+  }
+
+  layout() {
+    const W = this.canvas.width, H = this.canvas.height;
+    const size = Math.min(W, H) * 0.9 * this.zoom;
+    const scale = size / MAP_SIZE;
+    const p = this.world.player;
+    const cx = this.zoom > 1 ? W / 2 - (p.x - MAP_MIN - MAP_SIZE / 2) * scale : W / 2;
+    const cy = this.zoom > 1 ? H / 2 - (p.z - MAP_MIN - MAP_SIZE / 2) * scale : H / 2;
+    return { x0: cx - size / 2, y0: cy - size / 2, scale };
+  }
+
+  toScreen(x, z) {
+    const L = this.layout();
+    return [L.x0 + (x - MAP_MIN) * L.scale, L.y0 + (z - MAP_MIN) * L.scale];
+  }
+
+  onClick(e) {
+    if (!this.open) return;
+    const dpr = this.hud.dpr ?? 1;
+    const L = this.layout();
+    const x = (e.clientX * dpr - L.x0) / L.scale + MAP_MIN;
+    const z = (e.clientY * dpr - L.y0) / L.scale + MAP_MIN;
+    if (e.button === 2) this.world.waypoint = null;
+    else if (e.button === 0) {
+      this.world.waypoint = [x, z];
+      this.world.emit('waypoint', { x, z });
+    }
+  }
+
+  draw() {
+    const g = this.hud.g;
+    const W = this.canvas.width, H = this.canvas.height;
+    const s = Math.max(0.75, Math.min(H / 1080, W / 1920) * 1.25);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = 'rgba(4,6,12,0.92)';
+    g.fillRect(0, 0, W, H);
+    const L = this.layout();
+    g.drawImage(this.hud.map, L.x0, L.y0, MAP_SIZE * L.scale, MAP_SIZE * L.scale);
+    g.strokeStyle = 'rgba(47,243,224,0.5)';
+    g.lineWidth = 2;
+    g.strokeRect(L.x0, L.y0, MAP_SIZE * L.scale, MAP_SIZE * L.scale);
+    // District names.
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    for (const [key, bx, bz] of LABELS) {
+      const [x, y] = this.toScreen(bx * PITCH, bz * PITCH);
+      g.font = `900 ${Math.round(22 * s * Math.min(1.4, this.zoom))}px "Arial Black", sans-serif`;
+      g.lineWidth = 5;
+      g.strokeStyle = '#000';
+      g.strokeText(DISTRICTS[key].name.toUpperCase(), x, y);
+      g.fillStyle = DISTRICTS[key].color;
+      g.fillText(DISTRICTS[key].name.toUpperCase(), x, y);
+    }
+    // Blips.
+    for (const b of this.hud.blips()) {
+      const [x, y] = this.toScreen(b.x, b.z);
+      if (b.dot) {
+        g.fillStyle = b.color;
+        g.beginPath();
+        g.arc(x, y, (b.size ?? 4) * 1.2, 0, Math.PI * 2);
+        g.fill();
+      } else drawIcon(g, b.icon, x, y, 11 * s, b.color);
+    }
+    // Waypoint route.
+    const route = this.hud.minimap.route;
+    if (route) {
+      g.strokeStyle = '#ff3fa4';
+      g.lineWidth = 3;
+      g.beginPath();
+      route.forEach(([x, z], i) => {
+        const [sx, sy] = this.toScreen(x, z);
+        if (i) g.lineTo(sx, sy); else g.moveTo(sx, sy);
+      });
+      g.stroke();
+    }
+    // Player.
+    const p = this.world.player;
+    const [px, py] = this.toScreen(p.x, p.z);
+    g.save();
+    g.translate(px, py);
+    g.rotate(Math.PI - (p.vehicle ? p.vehicle.yaw : p.yaw));
+    g.fillStyle = '#fff';
+    g.strokeStyle = '#000';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(0, -12); g.lineTo(8, 9); g.lineTo(0, 4); g.lineTo(-8, 9); g.closePath();
+    g.fill(); g.stroke();
+    g.restore();
+    // Legend.
+    const items = Object.values(LANDMARKS).map((l) => [l.icon, l.name, l.color]);
+    items.push(['mission', 'Mission', '#ffd23a'], ['save', 'Save point', '#2ff3e0'], ['target', 'Waypoint', '#ff3fa4'], ['tag', 'Orchid tag', '#c070ff']);
+    const lx = 24 * s, ly = 24 * s;
+    g.fillStyle = 'rgba(8,10,20,0.85)';
+    g.fillRect(lx, ly, 250 * s, (items.length * 24 + 50) * s);
+    g.font = `900 ${18 * s}px "Arial Black", sans-serif`;
+    g.textAlign = 'left';
+    g.fillStyle = '#2ff3e0';
+    g.fillText('SELARA BAY', lx + 14 * s, ly + 22 * s);
+    g.font = `600 ${14 * s}px system-ui, sans-serif`;
+    items.forEach(([icon, name, color], i) => {
+      drawIcon(g, icon, lx + 24 * s, ly + (52 + i * 24) * s, 8 * s, color);
+      g.fillStyle = '#f2f4ff';
+      g.fillText(name, lx + 42 * s, ly + (52 + i * 24) * s);
+    });
+    g.textAlign = 'center';
+    g.fillStyle = '#c8cce0';
+    g.fillText('Left click: set waypoint   ·   Right click: clear   ·   Wheel: zoom   ·   M / Esc: close', W / 2, H - 22 * s);
+  }
+}

@@ -69,7 +69,7 @@ export class LaneDriver {
     for (const o of world.vehicles.list) if (o !== v && Math.abs(o.x - v.x) < 40 && Math.abs(o.z - v.z) < 40) check(o.x, o.z, o.def.len / 2);
     for (const p of world.peds?.list ?? []) if (!p.dead && Math.abs(p.x - v.x) < 25 && Math.abs(p.z - v.z) < 25) check(p.x, p.z, 0.4);
     const pl = world.player;
-    if (pl && !pl.vehicle) check(pl.x, pl.z, 0.4);
+    if (pl && !pl.vehicle && pl.visible) check(pl.x, pl.z, 0.4);
     return best;
   }
 
