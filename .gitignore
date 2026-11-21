@@ -1,0 +1,15 @@
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+test-results/
+playwright-report/
+.playwright-mcp/
+*.log
+.env*
+out/
+out2/
+.cache/
+.claude/settings.local.json
+wallet.json
+*.keypair.json
