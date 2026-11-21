@@ -438,7 +438,7 @@ export class PedSystem {
       if (Math.abs(p.x - camX) > 160 || Math.abs(p.z - camZ) > 160) continue;
       p.pose();
       m4compose(p.x, p.y, p.z, p.yaw, 0, 0, 1, 1, 1, p.model);
-      renderer.draw(this.meshFor(p.meshKey), { model: p.model, bones: p.anim.bones, rim: p.kind === 'story' ? [1, 0.8, 0.6, 0.35 * night] : undefined });
+      renderer.draw(this.meshFor(p.meshKey), { model: p.model, bones: p.anim.bones, rim: p.kind === 'story' ? [1, 0.78, 0.5, 0.22 + 0.25 * night] : undefined });
       p.drawWeapon?.(renderer);
     }
   }

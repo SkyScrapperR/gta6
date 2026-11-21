@@ -60,7 +60,7 @@ export async function runShot(app, name) {
     }
     g.autoPolice = (dt) => { for (const c of g.vehicles.list) if (c.driver === 'shot') { c.throttle = c.speed < 21 ? 0.9 : 0.2; c.steer = (c.shotLane - c.x) * 0.06 - Math.sin(c.yaw) * 1.2; c.siren = true; } };
     v.speed = 20;
-    g.autoDrive = (dt) => { v.throttle = 0.75; v.steer = (502.6 - v.x) * 0.08 - Math.sin(v.yaw) * 1.2; };
+    g.autoDrive = (dt) => { v.throttle = v.speed < 19 ? 0.7 : 0; v.steer = (502.6 - v.x) * 0.08 - Math.sin(v.yaw) * 1.2; };
     g.heli.spawnNear(v.x, v.z - 30);
     Object.assign(g.heli, { x: v.x - 10, z: v.z - 34, y: 24 });
     g.camCtl.lookOffset = 2.75;
@@ -75,8 +75,10 @@ export async function runShot(app, name) {
     g.populate(16, 24);
     const lin = g.missions.stageGarage();
     g.dialogue.actors = { lin, kai: g.player };
-    const side = openSide(g, g.player, lin);
-    g.cinematic = { cam: { ...twoShot(g.player, lin, side, 3.1, 1.55, 0.2), fov: 40 }, portrait: 'lin', skipHint: false };
+    const sides = [1, -1].map((sd) => [sd, twoShot({ ...g.player }, { ...lin }, sd).pos[2]]);
+    const side = sides[0][1] < sides[1][1] ? sides[0][0] : sides[1][0];
+    void openSide;
+    g.cinematic = { cam: { ...twoShot(g.player, lin, side, 3.4, 1.5, 0.5), fov: 44 }, portrait: 'lin', skipHint: false };
     g.dialogue.say([['lin', "Viktor's nephew parks a yellow Vesper GT outside Bank Samudra like the street is his.", 30]]);
     g.controlsOn = false;
     await wait(app, 3);
@@ -86,13 +88,19 @@ export async function runShot(app, name) {
     g.env.hour = 23.2;
     const fr = g.city.anchors.freight;
     const y = fr.yard;
-    g.player.place(y.x0 + 14, y.z1 - 4, Math.PI);
-    g.camCtl.face(Math.PI);
-    g.camCtl.pitch = -0.05;
+    // Kai aims across the yard: guards behind lit containers, the Bison truck ahead to the right.
+    const px = fr.truck[0] + 9, pz = fr.truck[1] + 21;
+    const face = Math.atan2(fr.truck[0] - 3 - px, fr.truck[1] - pz);
+    g.player.place(px, pz, face);
+    g.camCtl.face(face);
+    g.camCtl.pitch = -0.02;
     g.arsenal.current = 'smg';
     g.player.aim = 1;
     const truck = g.vehicles.spawn('bison', fr.truck[0], fr.truck[1], Math.PI / 2, { color: '#3a2a4a' });
-    for (const [x, z] of fr.guardSpots.slice(0, 5)) {
+    g.missionNoCops = true;
+    for (const s of g.parkSlots) if (Math.hypot(s.x - px, s.z - pz) < 60) { s.gone = true; if (s.vehicle) g.vehicles.remove(s.vehicle); s.vehicle = null; }
+    const spots = [[fr.truck[0] + 5, fr.truck[1] + 7], [fr.truck[0] - 6, fr.truck[1] + 9], [fr.truck[0] + 13, fr.truck[1] + 4], [fr.truck[0] - 1, fr.truck[1] + 4], ...fr.guardSpots.slice(0, 2)];
+    for (const [x, z] of spots) {
       const e = g.peds.spawn('gang', x, z, { kind: 'gang', health: 900, state: 'scripted' });
       e.keep = true;
       e.weapon = 'pistol';

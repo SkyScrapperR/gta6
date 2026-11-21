@@ -69,8 +69,10 @@ export function shopfronts(ctx, x0, z0, x1, z1, side, y = CURB) {
     b.pop();
     // Name sign above the awning.
     const name = rng.pick(SHOP_NAMES);
-    const s = atlas.text(name, { fg: rng.pick(SIGN_FG), bg: rng.chance(0.5) ? '#14101c' : null, w: 512, h: 112 });
+    const fg = rng.pick(SIGN_FG);
+    const s = atlas.text(name, { fg, bg: rng.chance(0.5) ? '#14101c' : null, w: 512, h: 112 });
     signs.quad(cx + d[0] * 0.35, y + 5.0, cz + d[1] * 0.35, FRONT_YAW[side], Math.min(w - 1.6, 7.5), 1.25, s, 2.2, rng.chance(0.3) ? 1 : 0);
+    if (rng.chance(0.35)) ctx.neonLights.push([cx + d[0] * 2.2, y + 4.6, cz + d[1] * 2.2, hex(fg).map((c) => c * 0.5)]);
     ctx.shopLights.push([cx + d[0] * 2.5, y + 3.2, cz + d[1] * 2.5, warm]);
   }
 }

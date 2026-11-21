@@ -62,7 +62,7 @@ function garage(ctx, L) {
   ctx.fill(x1 + 4, L.z0, L.x1, z1 + 2, ['e', 'n']);
   return {
     bay: [cx, z0 + 5], lifts, inside: [cx, z0 + 4], front: [cx - 10, L.z0 - 2.2],
-    cutKai: [cx - 1.0, z0 + 4.2], cutLin: [cx + 0.75, z0 + 4.9],
+    cutKai: [cx - 0.6, z0 + 1.6], cutLin: [cx + 1.1, z0 + 2.3],
   };
 }
 

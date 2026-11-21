@@ -180,8 +180,12 @@ export class Player {
     return this.model;
   }
 
-  queue(renderer, night) {
+  queue(renderer, night, cine = false) {
     if (!this.visible) return;
+    if (cine) {
+      renderer.draw(this.mesh, { model: this.vehicle ? CarEntry.seatMatrix(this.vehicle) : this.matrix(), bones: this.anim.bones, rim: [1, 0.8, 0.55, 0.28 + night * 0.2] });
+      return;
+    }
     renderer.draw(this.mesh, {
       model: this.vehicle ? CarEntry.seatMatrix(this.vehicle) : this.matrix(),
       bones: this.anim.bones,

@@ -143,7 +143,7 @@ function onFrameEvents(events) {
       g.notes.push({ slot: 'banner', text: 'FLATLINED', color: '#ff3a4a', sub: 'Selara General Hospital  ·  -$100', priority: 10, duration: 4.4 });
     } else if (e.type === 'busted') {
       g.notes.push({ slot: 'banner', text: 'CUFFED', color: '#4a8aff', sub: 'Selara Police HQ  ·  -$100 · ammo confiscated', priority: 10, duration: 4.4 });
-    } else if (e.type === 'weaponGet') {
+    } else if (e.type === 'weaponGet' && !g.capture) {
       g.notes.push({ slot: 'toast', text: `${WEAPONS[e.key].name} acquired`, color: '#ffb347', duration: 2.5 });
     }
   }

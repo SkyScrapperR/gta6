@@ -427,7 +427,7 @@ export class Game {
     this.city.queue(r, this.env.night);
     this.vehicles.queue(r, this.env.night, cx, cz);
     this.peds.queue(r, this.env.night, cx, cz);
-    this.player.queue(r, this.env.night);
+    this.player.queue(r, this.env.night, !!this.cinematic);
     this.combat.queueWeapon(r, this.player);
     for (const q of this.peds.list) if (q.weapon && !q.hidden && Math.hypot(q.x - cx, q.z - cz) < 90) this.combat.queueWeapon(r, q);
     this.combat.queue(r);
