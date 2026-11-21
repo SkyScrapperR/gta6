@@ -51,5 +51,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #05050a; col
 .title-menu .subtitle { font-size: 20px; color: #ffe9f6; text-shadow: 0 0 12px rgba(255,63,164,.9), 0 2px 6px #000; }
 @keyframes neon { 0%, 100% { filter: drop-shadow(0 0 14px rgba(255,63,164,.85)) drop-shadow(0 0 46px rgba(47,243,224,.45)); }
   50% { filter: drop-shadow(0 0 22px rgba(255,63,164,1)) drop-shadow(0 0 70px rgba(47,243,224,.6)); } }
+.credits-roll { position: fixed; inset: 0; background: rgba(3,2,8,0.72); overflow: hidden; text-align: center; cursor: pointer; }
+.credits-roll .roll { position: absolute; left: 0; right: 0; top: 100%; animation: roll 26s linear forwards; font-family: system-ui, sans-serif; }
+.credits-roll h3 { color: var(--magenta); letter-spacing: .3em; font-family: var(--font); margin: 18px 0 6px; }
+.credits-roll p { margin: 4px 0; font-size: 18px; }
+.credits-roll .tag { letter-spacing: .5em; }
+@keyframes roll { to { transform: translateY(-190%); } }
 .confirm { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
 .confirm button { margin: 12px 8px 0; min-width: 120px; text-align: center; }

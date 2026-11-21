@@ -170,6 +170,7 @@ export class Player {
       seated: this.seat,
       steer: this.steerPose ?? 0,
       handsUp: this.cuffed,
+      talk: this.talk ?? 0,
     });
   }
 

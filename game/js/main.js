@@ -24,6 +24,7 @@ const app = {
   titleT: 0,
 
   setState(s) {
+    const prev = this.state;
     this.state = s;
     const playing = s === 'playing';
     this.input.wantLock = playing;
@@ -32,7 +33,7 @@ const app = {
     this.bigmap.open = s === 'map';
     this.renderer.post.dim = s === 'paused' ? 0.75 : 0;
     this.hud.visible = playing || s === 'cutscene';
-    if (playing || s === 'cutscene') this.menus.clear();
+    if ((playing || s === 'cutscene') && ['paused', 'map', 'title', 'loading'].includes(prev)) this.menus.clear();
   },
 
   applySettings(s) {
@@ -116,7 +117,13 @@ const app = {
 
   quitToTitle() {
     this.menus.clear();
+    this.game.missions.abort();
     this.enterTitle();
+  },
+
+  credits() {
+    this.game.music?.playCredits?.();
+    this.menus.creditsRoll(this.game, () => this.game.music?.stopScore?.());
   },
 };
 

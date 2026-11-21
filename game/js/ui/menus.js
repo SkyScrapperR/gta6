@@ -152,6 +152,27 @@ export class Menus {
     this.app.applySettings(s);
   }
 
+  /** End credits: a slow roll with the player's stats; free roam continues afterwards. */
+  creditsRoll(w, onDone) {
+    const s = w.stats;
+    const t = Math.floor(s.timePlayed);
+    const html = `<div class="credits-roll"><div class="roll">
+      <div class="logo" style="font-size:96px">SELARA BAY</div><p class="tag">HEAT ON THE COAST</p><br>
+      <h3>THE ORCHID HAS FALLEN</h3>
+      <p>Missions passed ${w.missions.passedCount} / 6</p><p>Orchid tags ${w.tags.collected.size} / 12</p>
+      <p>People taken down ${s.kills} · Officers ${s.copsKilled}</p><p>Cars stolen ${s.carsStolen} · Shots fired ${s.shots}</p>
+      <p>Money $${w.money.toLocaleString('en-US')}</p><p>Time played ${Math.floor(t / 60)}m ${t % 60}s</p><br>
+      <h3>STARRING</h3><p>Kai Santoso · Mama Lin · Dex · Viktor Raza · Rendy</p><br>
+      <h3>ENGINE, CITY, CHARACTERS, MUSIC</h3><p>Generated in code — custom WebGL2 renderer, Web Audio synthesis</p><br>
+      <h3>THANKS FOR PLAYING</h3><p>Free roam continues. The coast is yours.</p></div></div>`;
+    const m = this.el(html);
+    this.root.innerHTML = '';
+    this.root.appendChild(m);
+    const done = () => { m.remove(); onDone?.(); };
+    m.addEventListener('click', done);
+    setTimeout(done, 26000);
+  }
+
   confirm(text, yes, no) {
     const m = this.el(`<div class="confirm panel"><p style="font-family:system-ui;max-width:420px">${text}</p></div>`);
     const row = this.el('<div class="menu" style="position:static;flex-direction:row;padding:0;justify-content:center"></div>');

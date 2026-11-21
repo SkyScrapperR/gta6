@@ -19,6 +19,9 @@ import { Combat } from './combat/weapons.js';
 import { Arsenal } from './combat/arsenal.js';
 import { Pickups } from './combat/pickups.js';
 import { Notifications } from './ui/notifications.js';
+import { Markers } from './fx/markers.js';
+import { MissionSystem } from './story/missions.js';
+import { OrchidTags, Shops } from './story/side-content.js';
 import { POINTS } from './world/layout.js';
 import { makeRng } from './core/math.js';
 
@@ -63,6 +66,10 @@ export class Game {
     this.arsenal = new Arsenal(this);
     this.pickups = new Pickups(this);
     this.gangCoverTaken = new Set();
+    this.markers = new Markers(this.gl);
+    this.missions = new MissionSystem(this);
+    this.tags = new OrchidTags(this);
+    this.shops = new Shops(this);
     this.placeWorldPickups();
     this.spawnParkedCars();
     this.player.place(POINTS.homecomingCar[0] - 3, 1009.5, Math.PI);
@@ -345,6 +352,7 @@ export class Game {
     }
     this.missions?.update(dt);
     this.cutscene?.update(dt);
+    if (!this.cinematic) this.shops.update(dt);
     this.tags?.update(dt);
     this.heli?.update(dt);
     this.music?.update(dt, this);
@@ -395,6 +403,14 @@ export class Game {
     this.pickups.queue(r, this.env.night);
     this.fx.lights.queue(r);
     r.addTransparent(() => this.fx.decals.draw(r));
+    // Glowing markers: missions, save point, shops and the waypoint beam.
+    this.markers.begin();
+    if (this.app?.state !== 'title') {
+      this.missions.queueMarkers(this.markers);
+      this.shops.queueMarkers(this.markers);
+      if (this.waypoint) this.markers.add(this.waypoint[0], this.city.groundAt(this.waypoint[0], this.waypoint[1]), this.waypoint[1], 1.2, 60, [1.0, 0.25, 0.65]);
+    }
+    r.addTransparent(() => this.markers.draw(r));
     r.addTransparent(() => this.fx.particles.draw(r));
     this.extraQueue?.(r);
     r.post.desat = this.failState?.kind === 'flatlined' ? Math.min(1, this.failState.t / 1.5) : 0;

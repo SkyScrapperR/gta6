@@ -395,7 +395,7 @@ export class PedSystem {
     for (const p of this.list) {
       p.update(dt);
       // Cars: dive away from speeding ones, get knocked down by those that hit.
-      if (!p.dead && p.state !== 'scripted') {
+      if (!p.dead && p.state !== 'scripted' && !p.hidden) {
         for (const v of w.vehicles.list) {
           const sp = Math.abs(v.speed);
           if (sp < 2.5 || Math.abs(v.x - p.x) > 12 || Math.abs(v.z - p.z) > 12) continue;

@@ -61,7 +61,7 @@ function garage(ctx, L) {
   ctx.fill(L.x0, L.z0, x0 - 4, z1 + 2, ['w', 'n']);
   ctx.fill(x1 + 4, L.z0, L.x1, z1 + 2, ['e', 'n']);
   return {
-    bay: [cx, z0 + 5], lifts, inside: [cx, z0 + 4], front: [cx, L.z0 - 6],
+    bay: [cx, z0 + 5], lifts, inside: [cx, z0 + 4], front: [cx - 10, L.z0 - 2.2],
     cutKai: [cx - 3, z0 + 3.5], cutLin: [cx + 1.6, z0 + 5.5],
   };
 }
@@ -82,7 +82,7 @@ function safehouse(ctx, L) {
   ctx.fill(L.x0, cz + 16, L.x1, L.z1, ['w', 'e', 's'], 'house');
   ctx.fill(L.x0, L.z0, cx - 22, cz + 14, ['w', 'n'], 'house');
   ctx.fill(cx + 22, L.z0, L.x1, cz + 14, ['e', 'n'], 'house');
-  return { door: [cx + 6, cz - 1.5], save: [cx - 3, cz - 4], pickup: [cx + 3, cz - 6], front: [cx, L.z0 - 6] };
+  return { door: [cx + 6, cz - 1.5], save: [cx - 3, cz - 4], pickup: [cx + 3, cz - 6], front: [cx, L.z0 - 2.2] };
 }
 
 function hospital(ctx, L) {
@@ -100,7 +100,7 @@ function hospital(ctx, L) {
   ctx.signs.quad(cx, Y + 23, cz - 18.1, Math.PI, 5, 5, cross, 2.4);
   signAt(ctx, 'SELARA GENERAL HOSPITAL', cx, Y + 8.5, cz - 18.12, Math.PI, 24, 2.4, { fg: '#e02424', bg: '#ffffff' }, 1.6);
   ctx.fill(L.x0, L.z0, L.x1, cz - 26, ['n', 'w', 'e']);
-  return { respawn: [cx, cz - 24], front: [cx, L.z0 - 6] };
+  return { respawn: [cx, cz - 24], front: [cx, L.z0 - 2.2] };
 }
 
 function police(ctx, L) {
@@ -117,7 +117,7 @@ function police(ctx, L) {
   for (let x = cx - 21; x <= cx + 21; x += 4.2) b.box(x, Y + 0.05, cz - 22, 0.15, 0.02, 5);
   ctx.fill(L.x0, L.z0, L.x1, cz - 30, ['n', 'w', 'e']);
   ctx.parkingLot.push(...[-12.6, -4.2, 4.2, 12.6].map((dx) => [cx + dx + 2.1, cz - 22, 0, 'police']));
-  return { respawn: [cx, cz - 18.5], front: [cx, L.z0 - 6] };
+  return { respawn: [cx, cz - 18.5], front: [cx, L.z0 - 2.2] };
 }
 
 function bank(ctx, L) {
@@ -131,7 +131,7 @@ function bank(ctx, L) {
   roofTop(ctx, cx - 18, z0, cx + 18, z0 + 30, Y + 18);
   signAt(ctx, 'BANK SAMUDRA', cx, Y + 13.5, z0 - 5.05, Math.PI, 18, 1.4, { fg: '#ffd23a', bg: '#10223a' }, 2.0);
   ctx.fill(L.x0, z0 + 34, L.x1, L.z1, ['w', 'e', 's'], 'tower');
-  return { door: [cx, z0 - 6], getaway: [cx + 6, L.z0 - 4], front: [cx, L.z0 - 6] };
+  return { door: [cx, z0 - 6], getaway: [cx + 8, L.z0 - 15.8], front: [cx, L.z0 - 2.2] };
 }
 
 function orchidTower(ctx, L) {
@@ -167,7 +167,7 @@ function orchidTower(ctx, L) {
   ctx.props.add('fountain', cx + 26, Y, cz - 28);
   for (const [px, pz] of [[cx - 30, cz], [cx + 30, cz], [cx - 30, cz + 28], [cx + 30, cz + 28]]) ctx.props.add('planter', px, Y, pz);
   signAt(ctx, 'ORCHID TOWER', cx, Y + 5.5, cz - 18.2, Math.PI, 14, 1.8, { fg: '#e0a0ff' }, 2.6);
-  return { base: [cx, cz - 26], carStart: [cx + 12, L.z0 - 3], top: [cx, topY, cz] };
+  return { base: [cx, cz - 26], front: [cx - 10, L.z0 - 2.2], carStart: [cx + 12, L.z0 - 5.2], top: [cx, topY, cz] };
 }
 
 function freight(ctx, L) {
@@ -210,7 +210,7 @@ function respray(ctx, L) {
   ctx.fill(L.x0, L.z0, cx - w / 2 - 4, L.z1, ['w', 'n', 's']);
   ctx.fill(cx + w / 2 + 4, L.z0, L.x1, L.z1, ['e', 'n', 's']);
   ctx.fill(cx - w / 2 - 2, z0 + d + 4, cx + w / 2 + 2, L.z1, ['s']);
-  return { bay: [cx, z0 + d / 2], front: [cx, L.z0 - 6] };
+  return { bay: [cx, z0 + d / 2], front: [cx - 12, L.z0 - 2.2] };
 }
 
 function guns(ctx, L) {
@@ -225,7 +225,7 @@ function guns(ctx, L) {
   ctx.fill(p.x1 + 4, L.z0, L.x1, L.z1, ['e', 'n', 's']);
   ctx.fill(L.x0, p.z1 + 4, p.x1, L.z1, ['w', 's']);
   void h;
-  return { counter: [(p.x0 + p.x1) / 2, p.z0 - 2.5], front: [(p.x0 + p.x1) / 2, L.z0 - 6] };
+  return { counter: [(p.x0 + p.x1) / 2, p.z0 - 2.5], front: [(p.x0 + p.x1) / 2, L.z0 - 2.2] };
 }
 
 function dex(ctx, L) {
@@ -236,7 +236,7 @@ function dex(ctx, L) {
   ctx.fill(L.x0, L.z0, p.x0 - 4, L.z1, ['w', 'n', 's']);
   ctx.fill(p.x1 + 4, L.z0, L.x1, L.z1, ['e', 'n', 's']);
   ctx.fill(p.x0, p.z1 + 4, p.x1, L.z1, ['s']);
-  return { door: [(p.x0 + p.x1) / 2, p.z0 - 2.5], front: [(p.x0 + p.x1) / 2, L.z0 - 6] };
+  return { door: [(p.x0 + p.x1) / 2, p.z0 - 2.5], front: [(p.x0 + p.x1) / 2, L.z0 - 2.2] };
 }
 
 function cafe(ctx, L) {
