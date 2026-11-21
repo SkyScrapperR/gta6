@@ -16,6 +16,18 @@ import { CollisionWorld } from './collision.js';
 import { RoadGraph } from './roads.js';
 import { PropSystem } from './props.js';
 
+/** A thin cable from a to c sagging by `sag` metres in the middle, as a chain of short cylinders. */
+function wire(b, a, c, sag, segs = 8) {
+  const pt = (t) => [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t - sag * 4 * t * (1 - t), a[2] + (c[2] - a[2]) * t];
+  for (let k = 0; k < segs; k++) {
+    const p = pt(k / segs), q = pt((k + 1) / segs);
+    const dx = q[0] - p[0], dy = q[1] - p[1], dz = q[2] - p[2], len = Math.hypot(dx, dy, dz);
+    b.push().transform(p[0], p[1], p[2], Math.atan2(dx, dz), Math.acos(Math.max(-1, Math.min(1, dy / len))), 0);
+    b.cylinder(0, 0, 0, 0.014, 0.014, len, 3, { top: false });
+    b.pop();
+  }
+}
+
 const WARUNG_NAMES = ['Es Cendol', 'Bakso Lestari', 'Mie Ombak', 'Sate Pak Dodi', 'Kopi Senja', 'Martabak Malam', 'Es Kelapa', 'Gorengan Bu Tini'];
 const HOTEL_NAMES = ['Hotel Pantai Indah', 'Selara Beach Resort', 'Ombak Suites', 'Hotel Kelapa', 'The Coral', 'Senja Bay Hotel', 'Pelangi Inn', 'Hotel Mutiara', 'Laguna Selara', 'Pasir Putih'];
 
@@ -108,7 +120,7 @@ export class City {
       for (const t of ctx.treeSpots) this.props.add(rng.chance(0.6) ? 'tree' : 'palm', t[0], CURB, t[1], rng.range(0, 6), rng.range(0.8, 1.1));
       for (const l of ctx.lamps) this.addLamp(l[0], l[1], l[2], l[3]);
       for (const p of ctx.parkingLot) this.parking.push({ x: p[0], z: p[1], yaw: p[2], kind: p[3] ?? 'lot' });
-      this.streetFurniture(rng, i, j, district);
+      this.streetFurniture(rng, i, j, district, b);
       this.pedRings.push({ x0: i * PITCH + ROAD_HALF + 2, z0: j * PITCH + ROAD_HALF + 2, x1: (i + 1) * PITCH - ROAD_HALF - 2, z1: (j + 1) * PITCH - ROAD_HALF - 2, i, j });
     }
     this.addChunk(b);
@@ -312,7 +324,7 @@ export class City {
     this.lampLights.push([x + Math.sin(yaw) * 1.9, y + 7.1, z + Math.cos(yaw) * 1.9]);
   }
 
-  streetFurniture(rng, i, j, district) {
+  streetFurniture(rng, i, j, district, b = null) {
     const X0 = i * PITCH, Z0 = j * PITCH, X1 = X0 + PITCH, Z1 = Z0 + PITCH;
     const k = ROAD_HALF + 0.9;
     const sides = [
@@ -324,9 +336,22 @@ export class City {
     const greenery = district === 'downtown' || district === 'beach' ? 'palm' : 'tree';
     for (const s of sides) {
       const at = (u, off = 0) => (s.axis === 'x' ? [u, s.fixed + (s.yaw === Math.PI ? off : -off)] : [s.fixed + (s.yaw === -Math.PI / 2 ? off : -off), u]);
+      const poles = [];
       for (let u = s.a0; u <= s.a1; u += 24) {
         const [x, z] = at(u);
         this.addLamp(x, CURB, z, s.yaw);
+        poles.push([x, z]);
+      }
+      // Overhead power and phone lines strung pole to pole, sagging between them (not downtown).
+      if (b && district !== 'downtown' && district !== 'park') {
+        b.paint(hex('#1c1c1e'), MAT.PLAIN);
+        for (const [x, z] of poles) b.box(x, CURB + 6.55, z, s.axis === 'x' ? 0.08 : 1.1, 0.08, s.axis === 'x' ? 1.1 : 0.08);
+        for (let p = 0; p + 1 < poles.length; p++) {
+          for (const [dy, off, sag] of [[0, -0.45, 0.7], [0, 0.45, 0.8], [-0.45, 0, 0.95]]) {
+            const o = s.axis === 'x' ? [0, off] : [off, 0];
+            wire(b, [poles[p][0] + o[0], CURB + 6.6 + dy, poles[p][1] + o[1]], [poles[p + 1][0] + o[0], CURB + 6.6 + dy, poles[p + 1][1] + o[1]], sag);
+          }
+        }
       }
       if (district !== 'docks') {
         for (let u = s.a0 + 12; u < s.a1; u += 24) {

@@ -56,13 +56,49 @@ export function shopfronts(ctx, x0, z0, x1, z1, side, y = CURB) {
     const warm = rng.pick([[0.95, 0.75, 0.5], [0.9, 0.85, 0.7], [0.7, 0.85, 0.95], [1.0, 0.6, 0.45]]);
     b.paint([warm[0] * 0.32, warm[1] * 0.3, warm[2] * 0.3], MAT.LAMP, 0.42);
     b.box(cx + d[0] * 0.05, y + 1.85, cz + d[1] * 0.05, sx, 3.2, sz);
+    // What shows through the glass: stocked shelves and a counter, or a closed roller shutter.
+    // (A fixed pattern per shop, so the seeded layout is unchanged.)
+    const at = (u, out) => [cx + (along ? u : 0) + d[0] * out, cz + (along ? 0 : u) + d[1] * out];
+    const span = (sxz, depth) => (along ? [sxz, depth] : [depth, sxz]);
+    const pattern = (k * 5 + Math.floor(Math.abs(c) * 3.3)) % 5;
+    if (pattern === 4) {
+      const [px, pz] = at(0, 0.32);
+      const [wx, wz] = span(w - 1.3, 0.06);
+      b.paint(hex('#a3a6aa'), MAT.METAL).box(px, y + 1.75, pz, wx, 3.0, wz);
+      b.paint(hex('#6e7176'), MAT.METAL);
+      for (let yy = 0.4; yy < 3.2; yy += 0.24) b.box(px + d[0] * 0.035, y + yy, pz + d[1] * 0.035, along ? w - 1.3 : 0.02, 0.03, along ? 0.02 : w - 1.3);
+      b.paint(hex('#2a2a2e'), MAT.METAL).box(px + d[0] * 0.05, y + 0.35, pz + d[1] * 0.05, 0.12, 0.14, 0.12);
+    } else {
+      const goods = [hex('#e84a3a'), hex('#f2c41a'), hex('#3a8ad8'), hex('#5ac05a'), hex('#f08a2a'), hex('#d860a8'), hex('#f2f2ea')];
+      for (const sy of [0.95, 1.65, 2.35]) {
+        const [px, pz] = at(0, 0.3);
+        const [wx, wz] = span(w - 2.0, 0.3);
+        b.paint(hex('#7a5a3a'), MAT.WOOD).box(px, y + sy, pz, wx, 0.05, wz);
+        for (let g = 0; g < Math.floor((w - 2.2) / 0.32); g++) {
+          const u = -(w - 2.2) / 2 + 0.16 + g * 0.32;
+          const [gx, gz] = at(u, 0.3);
+          const tall = 0.18 + ((g * 7 + pattern * 3 + sy * 10) % 4) * 0.05;
+          b.paint(goods[(g * 3 + pattern + Math.round(sy * 10)) % goods.length], MAT.PLAIN).box(gx, y + sy + 0.025 + tall / 2, gz, along ? 0.24 : 0.2, tall, along ? 0.2 : 0.24);
+        }
+      }
+      const [qx, qz] = at((w - 1.2) * 0.22, 0.58);
+      const [cw, cd] = span((w - 1.2) * 0.4, 0.5);
+      b.paint(hex(pattern % 2 ? '#8a6a48' : '#d8d4c8'), MAT.WOOD).box(qx, y + 0.5, qz, cw, 1.0, cd);
+      b.paint(hex('#2a2a2e'), MAT.PLAIN).box(qx, y + 1.02, qz, cw + 0.04, 0.04, cd + 0.04);
+    }
     b.paint(hex('#2a2a2e'), MAT.METAL);
-    // Mullions and a door frame.
+    // Mullions and a door frame, in front of the interior.
     for (const t of [-0.5, -0.15, 0.2, 0.5]) {
       const ox = along ? t * (w - 1.2) : 0, oz = along ? 0 : t * (w - 1.2);
-      b.box(cx + ox + d[0] * 0.2, y + 1.85, cz + oz + d[1] * 0.2, along ? 0.12 : 0.15, 3.3, along ? 0.15 : 0.12);
+      b.box(cx + ox + d[0] * 0.85, y + 1.85, cz + oz + d[1] * 0.85, along ? 0.12 : 0.15, 3.3, along ? 0.15 : 0.12);
     }
-    b.box(cx + d[0] * 0.2, y + 3.5, cz + d[1] * 0.2, along ? w - 1.0 : 0.15, 0.14, along ? 0.15 : w - 1.0);
+    b.box(cx + d[0] * 0.85, y + 3.5, cz + d[1] * 0.85, along ? w - 1.0 : 0.15, 0.14, along ? 0.15 : w - 1.0);
+    // A potted plant by every third door.
+    if ((k + Math.floor(Math.abs(c))) % 3 === 0) {
+      const [px, pz] = at((w - 1.2) * 0.5 + 0.1, 1.25);
+      b.paint(hex('#a0522d'), MAT.CONCRETE).cylinder(px, y, pz, 0.26, 0.32, 0.55, 8, { top: true });
+      b.paint(hex('#3f8a3a'), MAT.FOLIAGE).sphere(px, y + 0.95, pz, 0.42, 0.5, 0.42, 7, 5);
+    }
     // Awning, angled outwards.
     const aw = hex(rng.pick(AWNINGS));
     b.paint(aw, MAT.CLOTH);
@@ -198,6 +234,25 @@ export function midrise(ctx, p, { floors = null, palette = PALETTES.midtown, sho
           b.paint(balcony, MAT.CONCRETE).box(bx, y, bz, along ? 3.0 : 1.4, 0.18, along ? 1.4 : 3.0);
           b.paint(balcony, MAT.METAL).box(bx + d[0] * 0.65, y + 0.5, bz + d[1] * 0.65, along ? 3.0 : 0.06, 0.9, along ? 0.06 : 3.0);
         }
+      }
+    }
+    // Ledges on every floor and AC units hung under some windows (a fixed pattern, so the seeded city
+    // layout is unchanged).
+    const ledge = wall.map((c) => c * 0.88);
+    b.paint(ledge, MAT.CONCRETE);
+    for (let fl = 2; fl < nf; fl++) {
+      const y = y0 + fl * 3.5 - 0.05;
+      b.box(along ? (x0 + x1) / 2 : face + d[0] * 0.08, y, along ? face + d[1] * 0.08 : (z0 + z1) / 2, along ? len : 0.16, 0.12, along ? 0.16 : len);
+    }
+    const seed = Math.floor(Math.abs(x0 * 13.7 + z0 * 7.3 + face * 3.1));
+    for (let fl = 1; fl < nf; fl++) {
+      for (let k = 0; k < Math.floor(len / 3.1); k++) {
+        if ((seed + fl * 5 + k * 3) % 7 > 1) continue;
+        const c = (along ? x0 : z0) + 1.55 + k * 3.1;
+        const y = y0 + fl * 3.5 + 0.55;
+        const ax = along ? c : face + d[0] * 0.25, az = along ? face + d[1] * 0.25 : c;
+        b.paint(hex('#d8d8d2'), MAT.METAL).box(ax, y, az, along ? 0.8 : 0.45, 0.5, along ? 0.45 : 0.8);
+        b.paint(hex('#3a3c40'), MAT.PLAIN).box(ax + d[0] * 0.23, y, az + d[1] * 0.23, along ? 0.36 : 0.02, 0.36, along ? 0.02 : 0.36);
       }
     }
     if (shops) shopfronts(ctx, x0, z0, x1, z1, f);
