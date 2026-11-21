@@ -9,7 +9,7 @@ import { PARTICLE_VS, PARTICLE_FS } from '../engine/shaders/particles.js';
 const MAX = 6000;
 const STRIDE = 16; // instance floats: pos3 size1 col4 stretch4 misc4
 
-export const PK = { ROUND: 0, SMOKE: 1, STREAK: 2 };
+export const PK = { ROUND: 0, SMOKE: 1, STREAK: 2, FIRE: 3 };
 
 export class Particles {
   constructor(gl) {
@@ -201,24 +201,31 @@ export class Particles {
   }
 
   explosion(x, y, z, scale = 1) {
-    // White-hot core flash, then a billowing fireball that cools from yellow to deep red.
-    for (let k = 0; k < 6; k++) {
-      this.spawn({ x, y: y + 0.8, z, vx: 0, vy: 1, vz: 0, life: 0.18, size: 2.6 * scale, size1: 4.2 * scale, col: [16, 10, 5, 1], col1: [6, 2, 0.4, 0], additive: true });
+    // A small white-hot core, then a defined fireball of noisy-edged puffs (yellow core, orange-red rim)
+    // that rolls upward and cools, plus a thin additive glow so it lights the bloom without washing out.
+    for (let k = 0; k < 3; k++) {
+      this.spawn({ x, y: y + 0.9, z, vy: 1, life: 0.16, size: 1.3 * scale, size1: 2.2 * scale, col: [14, 9, 4.5, 1], col1: [5, 1.6, 0.3, 0], additive: true });
     }
-    for (let k = 0; k < 56; k++) {
-      const a = Math.random() * 6.28, e = Math.random() * 1.2, s = (2 + Math.random() * 7) * scale;
-      this.spawn({ x, y: y + 0.5, z, vx: Math.cos(a) * Math.cos(e) * s, vy: Math.sin(e) * s + 2.5, vz: Math.sin(a) * Math.cos(e) * s, life: 0.6 + Math.random() * 0.7, size: (0.6 + Math.random() * 0.7) * scale, size1: (1.6 + Math.random() * 0.8) * scale, col: [9, 3.8, 0.8, 1], col1: [1.6, 0.25, 0.05, 0], additive: true, drag: 3.2 });
+    for (let k = 0; k < 52; k++) {
+      const a = Math.random() * 6.28, e = Math.random() * 1.3, s = (1.5 + Math.random() * 5.5) * scale;
+      this.spawn({ x: x + Math.cos(a) * 0.4, y: y + 0.7, z: z + Math.sin(a) * 0.4, vx: Math.cos(a) * Math.cos(e) * s, vy: Math.sin(e) * s + 6, vz: Math.sin(a) * Math.cos(e) * s, life: 0.8 + Math.random() * 0.6, size: (0.6 + Math.random() * 0.5) * scale, size1: (1.4 + Math.random() * 0.8) * scale, col: [7, 3.4, 1.0, 1], col1: [0.5, 0.1, 0.03, 0.2], kind: PK.FIRE, drag: 2.8 });
+    }
+    for (let k = 0; k < 14; k++) {
+      const a = Math.random() * 6.28, s = (2 + Math.random() * 5) * scale;
+      this.spawn({ x, y: y + 0.8, z, vx: Math.cos(a) * s, vy: 2 + Math.random() * 4, vz: Math.sin(a) * s, life: 0.45, size: 1.0 * scale, size1: 1.8 * scale, col: [2.2, 0.8, 0.15, 1], col1: [0.4, 0.08, 0.0, 0], additive: true, drag: 3 });
     }
     for (let k = 0; k < 26; k++) {
       const a = Math.random() * 6.28, s = (1 + Math.random() * 3) * scale;
       // Smoke lit from inside: starts warm and glowing, cools to dark grey.
-      this.spawn({ x: x + Math.cos(a) * 0.8, y: y + 1 + Math.random() * 2, z: z + Math.sin(a) * 0.8, vx: Math.cos(a) * s, vy: 2 + Math.random() * 3, vz: Math.sin(a) * s, life: 3 + Math.random() * 2, size: 1.2 * scale, size1: 5 * scale, col: [2.2, 0.9, 0.35, 0.85], col1: [0.08, 0.08, 0.08, 0], kind: PK.SMOKE, drag: 0.9 });
+      this.spawn({ x: x + Math.cos(a) * 0.8, y: y + 1 + Math.random() * 2, z: z + Math.sin(a) * 0.8, vx: Math.cos(a) * s, vy: 2 + Math.random() * 3, vz: Math.sin(a) * s, life: 3 + Math.random() * 2, size: 1.2 * scale, size1: 4.2 * scale, col: [1.5, 0.5, 0.16, 0.9], col1: [0.05, 0.05, 0.05, 0], kind: PK.SMOKE, drag: 0.9 });
     }
     this.sparks(x, y + 0.5, z, 0, 1, 0, 30, [9, 5, 1.5]);
-    // Shockwave: a bright ring of dust racing outwards along the ground.
-    for (let k = 0; k < 64; k++) {
-      const a = (k / 64) * 6.28;
-      this.spawn({ x: x + Math.cos(a) * 0.6, y: y - 0.4, z: z + Math.sin(a) * 0.6, vx: Math.cos(a) * 26 * scale, vy: 0.4, vz: Math.sin(a) * 26 * scale, life: 0.55, size: 0.5 * scale, size1: 1.6 * scale, col: [4, 2.6, 1.4, 0.9], col1: [0.5, 0.4, 0.3, 0], additive: true, drag: 3.5 });
+    // Shockwave: a ring of dust racing outwards along the ground with a hot, thin leading edge.
+    const gy = Math.max(0.15, y - 0.6);
+    for (let k = 0; k < 72; k++) {
+      const a = (k / 72) * 6.28;
+      this.spawn({ x: x + Math.cos(a) * 0.8, y: gy + 0.3, z: z + Math.sin(a) * 0.8, vx: Math.cos(a) * 22 * scale, vy: 0.6, vz: Math.sin(a) * 22 * scale, life: 0.9, size: 0.6 * scale, size1: 2.0 * scale, col: [1.5, 1.2, 0.95, 0.85], col1: [0.4, 0.36, 0.32, 0], kind: PK.SMOKE, drag: 2.6 });
+      this.spawn({ x: x + Math.cos(a) * 0.8, y: gy + 0.2, z: z + Math.sin(a) * 0.8, vx: Math.cos(a) * 24 * scale, vy: 0, vz: Math.sin(a) * 24 * scale, life: 0.4, size: 0.12, stretch: 0.6, col: [6, 3.6, 1.6, 1], col1: [1, 0.4, 0.1, 0], kind: PK.STREAK, additive: true, drag: 2.6 });
     }
     // Debris: dark chunks plus glowing embers thrown out on arcs.
     for (let k = 0; k < 18; k++) {

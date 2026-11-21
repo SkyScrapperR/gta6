@@ -4,12 +4,19 @@
 // GPS route on the minimap); right click clears it. Mouse wheel zooms.
 
 import { MAP_MIN, MAP_SIZE, drawIcon } from './minimap.js';
-import { DISTRICTS, LANDMARKS, PITCH } from '../world/layout.js';
+import { DISTRICTS, LANDMARKS, PITCH, GRID, districtOfBlock } from '../world/layout.js';
 import { MISSIONS } from '../story/missions.js';
 
-const LABELS = [
-  ['downtown', 5.5, 3.6], ['midtown', 4.5, 7.5], ['midtown', 7.4, 1.0], ['residential', 1.5, 8.3], ['docks', 9.0, 4.6], ['beach', 5.0, 10.35], ['park', 3.4, 5.05],
-];
+/** Block centres (in block units) per district; the beach label sits on the sand south of the grid. */
+function districtCells() {
+  const by = {};
+  for (let bz = 0; bz < GRID; bz++) for (let bx = 0; bx < GRID; bx++) {
+    const k = districtOfBlock(bx, bz);
+    if (k !== 'beach' && k !== 'sea') (by[k] ??= []).push([bx + 0.5, bz + 0.5]);
+  }
+  by.beach = [[5, 10.35], [3, 10.35], [7, 10.35]];
+  return by;
+}
 
 export class BigMap {
   constructor(world, hud) {
@@ -116,17 +123,35 @@ export class BigMap {
     g.strokeStyle = 'rgba(47,243,224,0.5)';
     g.lineWidth = 2;
     g.strokeRect(L.x0, L.y0, MAP_SIZE * L.scale, MAP_SIZE * L.scale);
-    // District names.
+    // District names: each once, on the district's block nearest its centre that no icon or other name covers.
     g.textAlign = 'center';
     g.textBaseline = 'middle';
-    for (const [key, bx, bz] of LABELS) {
-      const [x, y] = this.toScreen(bx * PITCH, bz * PITCH);
-      g.font = `900 ${Math.round(22 * s * Math.min(1.4, this.zoom))}px "Arial Black", sans-serif`;
+    const fontPx = Math.round(20 * s * Math.min(1.4, this.zoom));
+    g.font = `900 ${fontPx}px "Arial Black", sans-serif`;
+    const icons = this.hud.blips().map((b) => this.toScreen(b.x, b.z));
+    const placed = [];
+    for (const [key, cells] of Object.entries(districtCells())) {
+      const name = DISTRICTS[key].name.toUpperCase();
+      const hw = g.measureText(name).width / 2 + 4, hh = fontPx / 2 + 3;
+      const cx = cells.reduce((a, c) => a + c[0], 0) / cells.length, cz = cells.reduce((a, c) => a + c[1], 0) / cells.length;
+      const order = [...cells].sort((a, b) => Math.hypot(a[0] - cx, a[1] - cz) - Math.hypot(b[0] - cx, b[1] - cz));
+      const clear = ([x, y]) => icons.every(([ix, iy]) => Math.abs(ix - x) > hw + 10 * s || Math.abs(iy - y) > hh + 10 * s)
+        && placed.every(([px, py, pw, ph]) => Math.abs(px - x) > pw + hw || Math.abs(py - y) > ph + hh);
+      let at = null;
+      for (const c of order) {
+        for (const dy of [0, -0.25, 0.25]) {
+          const p = this.toScreen(c[0] * PITCH, (c[1] + dy) * PITCH);
+          if (clear(p)) { at = p; break; }
+        }
+        if (at) break;
+      }
+      at ??= this.toScreen(order[0][0] * PITCH, order[0][1] * PITCH);
+      placed.push([at[0], at[1], hw, hh]);
       g.lineWidth = 5;
       g.strokeStyle = '#000';
-      g.strokeText(DISTRICTS[key].name.toUpperCase(), x, y);
+      g.strokeText(name, at[0], at[1]);
       g.fillStyle = DISTRICTS[key].color;
-      g.fillText(DISTRICTS[key].name.toUpperCase(), x, y);
+      g.fillText(name, at[0], at[1]);
     }
     // Blips.
     for (const b of this.hud.blips()) {

@@ -384,7 +384,16 @@ async (page) => {
     await sleep(1500);
     const gs = await A('guns');
     const cash0 = (await S()).money;
-    await tp(gs.counter[0] - 4, gs.counter[1]);
+    // Walk up from a side with a clear line to the counter (a sidewalk tree stands on one side).
+    const start = await ev(([cx, cz]) => {
+      const col = window.__app.game.city.col;
+      for (const [dx, dz] of [[-4, 0], [0, 4], [0, -4], [4, 0]]) {
+        const l = Math.hypot(dx, dz);
+        if (!col.raycast(cx + dx, 1.0, cz + dz, -dx / l, 0, -dz / l, l - 0.5, () => true) && !col.resolveCircle(cx + dx, cz + dz, 0.4, 0.15, 1.8).hit) return [cx + dx, cz + dz];
+      }
+      return [cx - 4, cz];
+    }, gs.counter);
+    await tp(start[0], start[1]);
     await walkTo(gs.counter[0], gs.counter[1], { r: 0.8 });
     await until((s) => s.money < cash0, 5000, 'bought gear at Bang Bang Arms');
     step('ok: Kilat Respray and Bang Bang Arms');

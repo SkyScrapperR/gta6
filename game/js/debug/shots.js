@@ -51,7 +51,7 @@ export async function runShot(app, name) {
     v.driver = 'player';
     g.player.seat = 1;
     g.populate(24, 34);
-    for (const [type, x, z] of [['motor', 702.4, 300], ['motor', 705.8, 268], ['angkot', 705.8, 318], ['motor', 702.4, 330]]) {
+    for (const [type, x, z] of [['motor', 705.8, 300], ['angkot', 705.8, 318], ['motor', 706.4, 334], ['motor', 705.4, 352]]) {
       const t = g.traffic.spawnOne(0, 1e9, true, type);
       if (t) { t.x = x; t.z = z; t.yaw = x < 700 ? Math.PI : 0; t.speed = x < 700 ? 9 : 8; }
     }
@@ -73,7 +73,12 @@ export async function runShot(app, name) {
     const victim = g.vehicles.spawn('kancil', 694.0, z0 - 48, Math.PI * 0.62, { color: '#3a6a8a' });
     victim.health = 420;
     victim.driver = null;
-    g.autoPolice = () => { for (const c of cops) { c.throttle = c.speed < 22 ? 0.95 : 0.25; c.steer = (c.shotLane - c.x) * 0.06 - Math.sin(c.yaw - Math.PI) * 1.2; c.siren = true; } };
+    g.autoPolice = () => {
+      for (const c of cops) { c.throttle = c.speed < 22 ? 0.95 : 0.25; c.steer = (c.shotLane - c.x) * 0.06 - Math.sin(c.yaw - Math.PI) * 1.2; c.siren = true; }
+      // The Rajawali keeps station high behind the pursuit with its searchlight locked on the Vesper.
+      Object.assign(g.heli, { x: v.x - 3, y: 17, z: v.z + 42, vx: 0, vz: -v.speed, orbit: Math.PI / 2 });
+      g.heli.spot = [v.x, g.city.groundAt(v.x, v.z), v.z];
+    };
     v.speed = 21;
     let crashT = null;
     const onCrash = g.onCrash.bind(g);
@@ -173,9 +178,9 @@ export async function runShot(app, name) {
     const truck = g.vehicles.spawn('bison', fr.truck[0], fr.truck[1], Math.PI / 2, { color: '#3a2a4a' });
     g.missionNoCops = true;
     for (const s of g.parkSlots) if (Math.hypot(s.x - px, s.z - pz) < 60) { s.gone = true; if (s.vehicle) g.vehicles.remove(s.vehicle); s.vehicle = null; }
-    // Four guards at the container ends and by the truck, 9-15 m out; two already down near Kai.
+    // The four guards still standing, at the container ends and by the truck 9-15 m out (the two at the
+    // gate were dealt with on the way in, so the tracker reads 2/6).
     const spots = [[12.3, -2.9], [24, -2.3], [16, -7.3], [3.5, 2.5]].map(([dx, dz]) => [fr.truck[0] + dx, fr.truck[1] + dz]);
-    spots.push([fr.truck[0] + 12, fr.truck[1] + 2.5], [fr.truck[0] + 22, fr.truck[1] - 1]);
     const lx = Math.cos(face), lz = -Math.sin(face); // Kai's left
     const van = g.vehicles.spawn('bajak', px + lx * 4.2 - Math.sin(face) * 0.5, pz + lz * 4.2 - Math.cos(face) * 0.5, face + 0.35, { parked: true, color: '#5a8a5a' });
     van.driver = null;
@@ -188,8 +193,6 @@ export async function runShot(app, name) {
       e.brain = new GangBrain(g, { weapon, accuracy: 0.0, alerted: true });
       Object.assign(e.brain, { state: 'cover', cover: [x, z], coverT: 0, peekT: 0.3 + k * 0.45 });
     });
-    // Two guards already down.
-    for (const q of g.peds.list.filter((p) => p.kind === 'gang').slice(4)) q.damage(5000, px, pz, 'player');
     g.player.god = true;
     // Mid-mission Low Tide state; the tracker counter is computed from the guards actually down.
     g.missions.active = MISSIONS[4];

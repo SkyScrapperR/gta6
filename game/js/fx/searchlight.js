@@ -11,26 +11,33 @@ uniform vec3 uFrom;
 uniform vec3 uTo;
 uniform float uRadius;
 out float vT;
-out vec2 vR;
+out vec3 vN;
+out vec3 vW;
 void main() {
   vec3 d = uTo - uFrom;
   vec3 f = normalize(d);
   vec3 s = normalize(cross(f, abs(f.y) > 0.9 ? vec3(1, 0, 0) : vec3(0, 1, 0)));
   vec3 u = cross(s, f);
-  float r = mix(0.25, uRadius, aPos.y);
+  float r = mix(0.7, uRadius, aPos.y);
   vec3 p = uFrom + d * aPos.y + (s * aPos.x + u * aPos.z) * r;
   vT = aPos.y;
-  vR = aPos.xz;
+  vN = s * aPos.x + u * aPos.z;
+  vW = p;
   gl_Position = uViewProj * vec4(p, 1.0);
 }
 `;
 const BEAM_FS = `${GLSL_HEADER}
 in float vT;
-in vec2 vR;
+in vec3 vN;
+in vec3 vW;
 uniform float uStrength;
+uniform vec3 uCamPos;
 out vec4 fragColor;
 void main() {
-  float a = (1.0 - vT * 0.75) * 0.06 * uStrength;
+  // Soft volume: brightest where the view looks through the middle of the shaft, fading to nothing
+  // at its silhouette, and dimmer towards the ground.
+  float facing = abs(dot(normalize(vN), normalize(uCamPos - vW)));
+  float a = (1.0 - vT * 0.7) * 0.06 * uStrength * facing;
   fragColor = vec4(vec3(1.0, 0.97, 0.88) * a, 1.0);
 }
 `;
@@ -67,9 +74,12 @@ export class Searchlight {
       gl.useProgram(p.program);
       gl.uniformMatrix4fv(p.u('uViewProj'), false, renderer.camera.viewProj);
       gl.uniform3fv(p.u('uFrom'), from);
+      gl.uniform3fv(p.u('uCamPos'), renderer.camera.pos);
       gl.uniform3fv(p.u('uTo'), s);
-      gl.uniform1f(p.u('uRadius'), l * Math.tan(Math.acos(0.985)));
-      gl.uniform1f(p.u('uStrength'), 0.4 + renderer.env.night * 1.6);
+      // The visible shaft is the bright core of the spot (narrower than its full light cone).
+      gl.uniform1f(p.u('uRadius'), Math.min(3.2, l * 0.07));
+      // The scene is HDR before exposure, so the beam must be far brighter by day to read as haze at all.
+      gl.uniform1f(p.u('uStrength'), 3.0 + (1 - renderer.env.night) * 6);
       gl.blendFunc(gl.ONE, gl.ONE);
       gl.disable(gl.CULL_FACE);
       gl.bindVertexArray(this.vao);

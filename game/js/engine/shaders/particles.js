@@ -60,6 +60,10 @@ void main() {
     // Smoke: soft, noisy puff lit by the ambient sky (and its own colour for fire-lit smoke).
     float n = fbm(vUv * 2.2 + vMisc.y * 13.0 + vMisc.z * 1.5);
     a = sstep(1.0, 0.2, r + (n - 0.5) * 0.6);
+  } else if (kind == 3) {
+    // Fireball: a defined, noisy-edged puff, yellow-white in the middle and orange-red at the rim.
+    float n = fbm(vUv * 2.6 + vMisc.y * 17.0 + vMisc.z * 2.0);
+    a = sstep(0.95, 0.78, r + (n - 0.5) * 0.75);
   } else if (kind == 2) {
     // Streak (tracer, spark, rain): bright core along the length.
     a = sstep(1.0, 0.0, abs(vUv.x)) * sstep(1.0, 0.6, abs(vUv.y));
@@ -71,6 +75,11 @@ void main() {
   if (a < 0.003) discard;
   vec3 col = vColor.rgb;
   if (kind == 1) col *= (uHemiSky * 2.2 + 0.15);
+  if (kind == 3) {
+    float n2 = fbm(vUv * 4.0 + vMisc.y * 5.0);
+    float rim = clamp(r * 1.1 + (n2 - 0.5) * 0.5, 0.0, 1.0);
+    col *= mix(vec3(1.0, 0.9, 0.62), vec3(0.75, 0.2, 0.05), rim) * mix(1.7, 0.45, rim);
+  }
   if (uAdditive < 0.5) col = applyFog(col, vWorld, uCamPos, normalize(vWorld - uCamPos));
   fragColor = uAdditive > 0.5 ? vec4(col * a, 1.0) : vec4(col, a);
 }
