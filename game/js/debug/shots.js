@@ -109,9 +109,12 @@ export async function runShot(app, name) {
     g.player.god = true;
     g.missions.objective('Defeat the guards 2/6 · Destroy the Bison ✘', 'Shoot the truck until it explodes');
     g.autoFire = true;
+    // Pulled-back over-the-shoulder framing: Kai small on the left third, the yard ahead.
+    const fx = Math.sin(face), fz = Math.cos(face), rx = -fz, rz = fx;
+    g.debugCam = { pos: [px - fx * 13 + rx * 3.4, 4.2, pz - fz * 13 + rz * 3.4], target: [px + fx * 30 + rx * 3.4, 2.2, pz + fz * 30 + rz * 3.4], fov: 50 };
     await wait(app, 2.5);
     truck.damage(5000);
-    await wait(app, 0.7);
+    await wait(app, 0.28);
   } else if (name === 'kaicop') {
     midGame(app);
     app.setState('playing');

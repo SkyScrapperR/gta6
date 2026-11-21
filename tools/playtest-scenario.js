@@ -406,7 +406,7 @@ async (page) => {
         return [r / n, gg / n, b / n];
       };
       // Kai stands on the right of the frame, the officer on the left.
-      const kai = avg(0.63, 0.72), cop = avg(0.27, 0.36);
+      const kai = avg(0.625, 0.66), cop = avg(0.285, 0.33);
       return { kai, cop, dist: Math.hypot(kai[0] - cop[0], kai[1] - cop[1], kai[2] - cop[2]) };
     });
     expect(diff.dist > 40, `Kai and the cop are visually distinct (colour distance ${diff.dist.toFixed(1)})`);
