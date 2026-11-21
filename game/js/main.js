@@ -1,55 +1,65 @@
-// City test (step 3): generate Selara Bay and fly through it.
+// Boot, main loop and the top-level state machine:
+// loading -> title -> playing <-> paused / map / cutscene. Debug scenes come from ?shot=N.
+
 import { Renderer } from './engine/renderer.js';
-import { Camera } from './engine/camera.js';
-import { Environment } from './engine/sky.js';
 import { Input } from './core/input.js';
-import { City } from './world/city.js';
+import { Game } from './game.js';
 
 const canvas = document.getElementById('view');
-const renderer = new Renderer(canvas);
-const cam = new Camera();
-const env = new Environment();
-const input = new Input(canvas);
-input.wantLock = true;
-const q = new URLSearchParams(location.search);
-env.hour = Number(q.get('hour') ?? 17.2);
-env.targetRain = env.rain = Number(q.get('rain') ?? 0);
-renderer.setPreset(q.get('q') ?? 'high');
-const city = new City(renderer.gl);
-const fill = document.getElementById('loadfill');
-const text = document.getElementById('loadtext');
-await city.generate((p, msg) => {
-  fill.style.width = `${Math.round(p * 100)}%`;
-  text.textContent = msg;
-});
-document.getElementById('loading').classList.add('done');
+const params = new URLSearchParams(location.search);
 
-const v = (q.get('cam') ?? '420,40,560,0.6,-0.25').split(',').map(Number);
-let [px, py, pz, yaw, pitch] = v;
-let t = 0;
-let last = performance.now();
-function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  t += dt;
-  const [dx, dy] = input.look();
-  yaw -= dx;
-  pitch = Math.max(-1.5, Math.min(1.5, pitch - dy));
-  const sp = (input.isDown('ShiftLeft') ? 120 : 30) * dt;
-  const fx = Math.sin(yaw) * Math.cos(pitch), fy = Math.sin(pitch), fz = Math.cos(yaw) * Math.cos(pitch);
-  const f = input.axis('KeyS', 'KeyW'), s = input.axis('KeyA', 'KeyD');
-  px += (fx * f - Math.cos(yaw) * s) * sp;
-  py += fy * f * sp + input.axis('KeyQ', 'KeyE') * sp;
-  pz += (fz * f + Math.sin(yaw) * s) * sp;
-  cam.pos = [px, py, pz];
-  cam.target = [px + fx, py + fy, pz + fz];
-  env.update(dt);
-  city.update(dt, px, pz, renderer.preset.draw);
-  renderer.begin(cam, env, t);
-  city.queue(renderer, env.night);
-  renderer.render(dt);
-  input.endFrame();
-  requestAnimationFrame(frame);
+const app = {
+  state: 'loading',
+  renderer: null,
+  input: null,
+  game: null,
+  fps: 0,
+  setState(s) {
+    this.state = s;
+    this.input.wantLock = s === 'playing';
+    if (s !== 'playing') this.input.releaseLock();
+  },
+};
+
+async function boot() {
+  app.renderer = new Renderer(canvas);
+  app.renderer.setPreset(params.get('q') ?? 'high');
+  app.input = new Input(canvas);
+  app.game = new Game(app.renderer, app.input);
+  const fill = document.getElementById('loadfill');
+  const text = document.getElementById('loadtext');
+  await app.game.load((p, msg) => {
+    fill.style.width = `${Math.round(p * 100)}%`;
+    text.textContent = msg;
+  });
+  if (params.has('hour')) app.game.env.hour = Number(params.get('hour'));
+  document.getElementById('loading').classList.add('done');
+  app.setState('playing');
+  requestAnimationFrame(loop);
 }
-requestAnimationFrame(frame);
-window.__engine = { renderer, env, cam, city };
+
+let last = performance.now();
+let fpsAcc = 0, fpsN = 0;
+function loop(now) {
+  const raw = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  fpsAcc += raw;
+  fpsN++;
+  if (fpsAcc > 0.5) {
+    app.fps = fpsN / fpsAcc;
+    fpsAcc = 0;
+    fpsN = 0;
+  }
+  const dt = Math.min(raw, 1 / 20);
+  const g = app.game;
+  if (app.state === 'playing') g.update(dt * g.timeScale);
+  g.render(dt);
+  app.input.endFrame();
+  requestAnimationFrame(loop);
+}
+
+window.__app = app;
+boot().catch((e) => {
+  console.error(e);
+  document.getElementById('loadtext').textContent = `Error: ${e.message}`;
+});
