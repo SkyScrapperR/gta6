@@ -1,0 +1,50 @@
+/* SELARA BAY UI: dark translucent panels, teal/magenta accents, heavy sans-serif with outlines. */
+:root {
+  --teal: #2ff3e0;
+  --magenta: #ff3fa4;
+  --panel: rgba(8, 10, 20, 0.72);
+  --panel-edge: rgba(47, 243, 224, 0.35);
+  --text: #f2f4ff;
+  --font: 'Segoe UI Black', 'Arial Black', 'Helvetica Neue', Impact, system-ui, sans-serif;
+}
+html, body { margin: 0; height: 100%; overflow: hidden; background: #05050a; color: var(--text); font-family: var(--font); user-select: none; }
+#view, #hud { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+#hud { pointer-events: none; }
+#ui { position: fixed; inset: 0; pointer-events: none; }
+#ui > * { pointer-events: auto; }
+
+#loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at 50% 85%, #ff5a7a 0%, #6b2a8c 32%, #0b0818 72%); z-index: 10; transition: opacity .6s; }
+#loading.done { opacity: 0; pointer-events: none; }
+.logo { font-size: clamp(48px, 9vw, 132px); font-weight: 900; letter-spacing: .08em; line-height: 1;
+  background: linear-gradient(90deg, var(--teal), #9a8cff 50%, var(--magenta)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 14px rgba(255, 63, 164, .75)) drop-shadow(0 0 40px rgba(47, 243, 224, .35)); }
+.tag { letter-spacing: .5em; font-size: 15px; opacity: .9; text-shadow: 0 0 8px #000; }
+.bar { width: min(420px, 70vw); height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; }
+#loadfill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), var(--magenta)); transition: width .2s; }
+#loadtext { font-family: system-ui, sans-serif; font-size: 13px; opacity: .8; letter-spacing: .1em; }
+
+/* Menus */
+.menu { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; padding-left: 7vw; gap: 10px; }
+.menu.center { align-items: center; padding-left: 0; }
+.menu .title { margin-bottom: 6px; }
+.menu .subtitle { letter-spacing: .5em; font-size: 16px; margin-bottom: 34px; text-shadow: 0 2px 8px #000; color: #ffe; }
+.menu button { font-family: var(--font); font-size: 22px; letter-spacing: .12em; color: var(--text); background: var(--panel);
+  border: 1px solid var(--panel-edge); border-left: 4px solid var(--teal); padding: 10px 26px; min-width: 300px; text-align: left; cursor: pointer;
+  text-shadow: 0 0 2px #000, 0 2px 4px #000; transition: all .12s; }
+.menu button:hover, .menu button.sel { border-left-color: var(--magenta); background: rgba(40, 12, 40, .82); transform: translateX(6px); }
+.panel { background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 6px; padding: 22px 28px; box-shadow: 0 10px 40px rgba(0,0,0,.5); max-width: 760px; }
+.panel h2 { margin: 0 0 14px; letter-spacing: .14em; color: var(--teal); }
+.panel table { border-collapse: collapse; font-family: system-ui, sans-serif; font-size: 15px; }
+.panel td { padding: 4px 14px 4px 0; }
+.panel td:first-child { color: var(--magenta); font-weight: 800; font-family: var(--font); }
+.row { display: flex; align-items: center; gap: 12px; margin: 8px 0; font-family: system-ui, sans-serif; }
+.row label { min-width: 170px; }
+.row input[type=range] { width: 220px; accent-color: var(--magenta); }
+.row select { background: #111; color: #fff; border: 1px solid var(--panel-edge); padding: 4px 8px; }
+.hint { font-family: system-ui, sans-serif; opacity: .75; font-size: 13px; margin-top: 10px; }
+.big { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.big .word { font-size: clamp(60px, 11vw, 160px); font-weight: 900; letter-spacing: .1em; -webkit-text-stroke: 3px #000; }
+.big .sub { font-size: 22px; letter-spacing: .3em; text-shadow: 0 2px 6px #000; margin-top: 8px; }
+.confirm { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+.confirm button { margin: 12px 8px 0; min-width: 120px; text-align: center; }

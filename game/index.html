@@ -4,17 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SELARA BAY — Heat on the Coast</title>
-<style>
-  html, body { margin: 0; height: 100%; background: #07060d; color: #eef; font-family: system-ui, sans-serif; }
-  #boot { display: grid; place-items: center; height: 100%;
-    background: radial-gradient(ellipse at 50% 80%, #ff5a7a 0%, #6b2a8c 35%, #0d0a1c 75%); }
-  h1 { font-size: 96px; font-weight: 900; letter-spacing: 6px; margin: 0;
-    background: linear-gradient(90deg, #2ff3e0, #ff3fa4); -webkit-background-clip: text; color: transparent;
-    filter: drop-shadow(0 0 18px #ff3fa4aa); }
-  p { text-align: center; letter-spacing: 4px; opacity: .85; }
-</style>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="boot"><div><h1>SELARA BAY</h1><p>HEAT ON THE COAST — ENGINE BOOTING</p></div></div>
+<canvas id="view"></canvas>
+<canvas id="hud"></canvas>
+<div id="ui"></div>
+<div id="loading">
+  <div class="logo">SELARA BAY</div>
+  <div class="tag">HEAT ON THE COAST</div>
+  <div class="bar"><div id="loadfill"></div></div>
+  <div id="loadtext">Booting engine…</div>
+</div>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
