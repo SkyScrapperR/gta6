@@ -112,7 +112,16 @@ for (const s of shots) {
   check(`screenshot ${s}`, bytes.length <= CAPS.screenshots.max_bytes && !!size && Math.max(...size) <= 1280 && Math.min(...size) >= 480, `${bytes.length} bytes, ${size ? size.join('x') : '?'}`);
 }
 
-// 4. A content digest of the shipped game, stable across runs and machines.
+// 4. Soundtrack data: the radio stations and score are plain ES modules; every song must run 1.5-3 minutes.
+const { songLength } = await import('./game/js/audio/music/sequencer.js');
+const { STATIONS, ALL_SONGS } = await import('./game/js/audio/music/radio.js');
+check('radio stations', STATIONS.length === 3 && STATIONS.every((s: { songs: unknown[] }) => s.songs.length >= 3), `${STATIONS.length} stations`);
+for (const song of ALL_SONGS as { title: string; bpm: number }[]) {
+  const len = songLength(song);
+  check(`song "${song.title}"`, len >= 90 && len <= 180, `${song.bpm} BPM, ${len.toFixed(1)} s`);
+}
+
+// 5. A content digest of the shipped game, stable across runs and machines.
 const digest = createHash('sha256');
 for (const f of gameFiles) digest.update(`${f}\0`).update(readFileSync(join(gameDir, f)));
 report.push(`game sha256 ${digest.digest('hex')}`);

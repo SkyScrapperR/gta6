@@ -6,9 +6,16 @@
 
 An original 3D open-world crime game for desktop Chrome, built for the make.fun bounty **gta6-01**.
 Kai Santoso comes home to Selara Bay, a sun-soaked tropical coastal city, after five years away — and finds
-Viktor Raza's Black Orchid syndicate squeezing the coast. Six story missions, a 10×10-block city with five
-districts, traffic, pedestrians, police with a 5-star wanted level, car theft, gunfights, a minimap, save games
-and a fully synthesized soundtrack and sound effects.
+Viktor Raza's Black Orchid syndicate squeezing the coast.
+
+- **City:** a 10×10-block coastal city — Kota Lama towers, Kemuning shops, Bukit Asri houses, Pier 9 docks,
+  Pantai Selara beach — with eleven landmarks, traffic lights, parks, piers and a day/night cycle.
+- **Story:** six missions with in-engine cutscenes (Homecoming, Yellow Fever, Collections, Wheelman,
+  Low Tide, Orchid Falls), plus 12 Orchid tags, Kilat Respray and Bang Bang Arms.
+- **Systems:** traffic and pedestrians, car theft and carjacking, seven car models, a 5-star wanted level
+  with line-of-sight tracking, pursuits, officers on foot, roadblocks and the Rajawali helicopter; four
+  weapons, gang cover AI, explosions; HUD with a rotating minimap and GPS, big map, save games.
+- **Soundtrack:** three radio stations and a score, all synthesized live (see [MUSIC.md](MUSIC.md)).
 
 ## Screenshots
 
@@ -38,7 +45,10 @@ one lit shader with procedural materials (facade windows that glow at night, asp
 clearcoat paint, glass fresnel), rigged meshes with up to 16 bones for characters and cars, a camera-fitted
 PCF shadow map, a time-of-day sky with stars and moon, forward point/spot lights, an animated water surface,
 HDR bloom, auto exposure and ACES tone mapping. All geometry is procedural; signs are rendered into a canvas
-atlas. Quality presets (Low / Medium / High) scale shadows, bloom, lights, render scale and draw distance.
+atlas. Quality presets (Low / Medium / High) scale shadows, bloom, lights, render scale and draw distance;
+the first run picks one from a short FPS probe, and adaptive resolution keeps Low/Medium smooth.
+
+Measured in headed desktop Chrome at 1280×720 on a modest GPU: **Low 37 fps · Medium 32 fps · High 29 fps**.
 
 ## Soundtrack
 

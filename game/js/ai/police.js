@@ -366,6 +366,39 @@ export class PoliceSystem {
     }
   }
 
+  /** At 3+ stars: two cruisers parked across the road the player is heading for, officers beside them. */
+  roadblock() {
+    const w = this.world;
+    const p = w.player;
+    const v = p.vehicle;
+    if (!v || Math.abs(v.speed) < 8) return;
+    const roads = w.city.roads;
+    const ahead = roads.nodeAhead(v.x, v.z, v.forward[0], v.forward[1]);
+    const next = roads.nodeAhead(ahead.x + v.forward[0] * 60, ahead.z + v.forward[1] * 60, v.forward[0], v.forward[1]);
+    if (!next || next === ahead) return;
+    const d = Math.hypot(next.x - p.x, next.z - p.z);
+    if (d < 70 || w.camera.frustum.sphereVisible(next.x, 1, next.z, 8) && d < 110) return;
+    const lane = roads.laneOf(next, ahead);
+    const mx = lane.start[0], mz = lane.start[1];
+    const perp = Math.atan2(lane.dir[1], -lane.dir[0]);
+    for (const s of [-1, 1]) {
+      const c = w.vehicles.spawn('patrol', mx + Math.cos(perp + Math.PI / 2) * 0 + lane.dir[1] * s * 2.7, mz - lane.dir[0] * s * 2.7, perp + (s > 0 ? 0.25 : -0.25), { parked: true });
+      c.siren = true;
+      c.roadblock = true;
+      c.pursuit = true;
+      c.officers = 1;
+      c.deployed = [];
+      c.driver = 'parked-police';
+      this.units.push(c);
+      const cop = w.peds.spawn('cop', c.x - lane.dir[0] * 3, c.z - lane.dir[1] * 3, { kind: 'cop', health: 60, state: 'scripted' });
+      cop.keep = true;
+      cop.brain = new CopBrain(this, c);
+      cop.brain.state = 'chase';
+      c.deployed.push(cop);
+    }
+    w.notes.push({ slot: 'toast', text: 'Roadblock ahead!', color: '#4a8aff', duration: 2.5 });
+  }
+
   standDown() {
     for (const v of this.units) {
       v.siren = false;
@@ -388,6 +421,11 @@ export class PoliceSystem {
       if (active < want && this.spawnT <= 0) {
         this.spawnT = 2.5;
         this.dispatch();
+      }
+      this.roadblockT = (this.roadblockT ?? 12) - dt;
+      if (stars >= 3 && this.roadblockT <= 0 && !w.missionNoCops) {
+        this.roadblockT = 28;
+        this.roadblock();
       }
     } else {
       // Keep a couple of patrol cars in normal traffic.
