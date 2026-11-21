@@ -1,0 +1,16 @@
+{
+  "name": "selara-bay",
+  "private": true,
+  "description": "SELARA BAY — an original open-world crime game with a custom WebGL2 engine (make.fun gta6-01).",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "serve": "node serve.ts",
+    "playtest": "node tools/playtest.mjs",
+    "screenshots": "node tools/screenshots.mjs",
+    "handin": "node main.ts"
+  },
+  "devDependencies": {
+    "playwright-core": "1.49.1"
+  }
+}

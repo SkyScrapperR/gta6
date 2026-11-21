@@ -34,7 +34,8 @@ export class Input {
     addEventListener('mousemove', (e) => {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
-      if (this.locked || this.freeLook) {
+      // Free-look (no pointer lock, e.g. automation): a move made with Ctrl held only recentres the cursor.
+      if (this.locked || (this.freeLook && !e.ctrlKey)) {
         this.mouseDX += e.movementX || 0;
         this.mouseDY += e.movementY || 0;
       }
@@ -42,7 +43,7 @@ export class Input {
     addEventListener('mousedown', (e) => {
       this.buttons |= 1 << e.button;
       this.clicked |= 1 << e.button;
-      if (this.wantLock && !this.locked) this.requestLock();
+      if (this.wantLock && !this.locked && !this.freeLook) this.requestLock();
     });
     addEventListener('mouseup', (e) => {
       this.buttons &= ~(1 << e.button);

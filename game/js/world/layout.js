@@ -81,7 +81,7 @@ export function onRoad(x, z) {
 export function onLand(x, z) {
   if (x >= -30 && x <= CITY + 30 && z >= -30 && z <= CITY + 62) return true;
   if (x >= 1030 && x <= 1150 && z >= 676 && z <= 704) return true; // east pier
-  if (x >= 440 && x <= 460 && z >= 1060 && z <= 1150) return true; // ferry pier
+  if (x >= 440 && x <= 460 && z >= 1010 && z <= 1150) return true; // ferry pier
   return false;
 }
 

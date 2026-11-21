@@ -112,8 +112,9 @@ export class Vehicle {
       this.throttle = 0;
       this.handbrake = true;
     }
-    // Parked cars stay put until something hits them.
-    if (this.parked && !this.driver && Math.abs(this.speed) < 0.05 && Math.abs(this.vlat) < 0.05) {
+    // Parked cars stay put until something hits them (cars on garage lifts never move).
+    if (this.lifted || (this.parked && !this.driver && Math.abs(this.speed) < 0.05 && Math.abs(this.vlat) < 0.05)) {
+      if (this.lifted) { this.speed = this.vlat = 0; }
       this.speed = 0;
       this.vlat = 0;
       this.updateVisual(dt);
@@ -197,7 +198,7 @@ export class Vehicle {
 
   onImpact(speed, other) {
     if (speed > this.lastImpact) this.lastImpact = speed;
-    const dmg = Math.max(0, speed - 4) * 14 * (other ? 1 : 0.8);
+    const dmg = Math.max(0, speed - 6) * (other ? 11 : 7);
     this.damage(dmg, other);
     this.sys.onCrash?.(this, speed, other);
   }
@@ -285,7 +286,7 @@ export class VehicleSystem {
       for (let j = i + 1; j < L.length; j++) {
         const b = L[j];
         if (Math.abs(a.x - b.x) > 9 || Math.abs(a.z - b.z) > 9) continue;
-        if (a.parked && b.parked && !a.driver && !b.driver) continue;
+        if ((a.parked && b.parked && !a.driver && !b.driver) || a.lifted || b.lifted) continue;
         for (const ca of a.circles()) {
           for (const cb of b.circles()) {
             const dx = ca[0] - cb[0], dz = ca[1] - cb[1];

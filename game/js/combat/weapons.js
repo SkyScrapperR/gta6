@@ -164,7 +164,7 @@ export class Combat {
       ex /= l; ey /= l; ez /= l;
       const h = this.cast(ox, oy, oz, ex, ey, ez, wpn.range, shooter);
       if (h.ped === w.player || (h.ped && h.ped.isPlayer)) {
-        w.player.damage(wpn.damage * (shooter.kind === 'cop' ? 0.55 : 0.6), shooter.x, shooter.z);
+        w.player.damage(wpn.damage * (shooter.kind === 'cop' ? 0.45 : 0.5), shooter.x, shooter.z);
       } else this.impact(h, wpn.damage, shooter);
       if (k < 3) w.fx.particles.tracer(ox, oy, oz, h.x, h.y, h.z);
       hits.push(h);
@@ -260,7 +260,7 @@ export class Combat {
 
   /** Draw held weapons and casings. */
   queueWeapon(renderer, ch) {
-    if (!ch.weapon || ch.weapon === 'fists' || ch.dead > 0.6 || ch.vehicle) return;
+    if (!ch.weapon || ch.weapon === 'fists' || ch.dead > 0.6 || ch.vehicle || (this.world.cinematic && ch === this.world.player)) return;
     const m = m4mul(ch.model, ch.anim.handMatrix());
     renderer.draw(this.meshes[ch.weapon], { model: m, cull: false, shadow: false });
   }

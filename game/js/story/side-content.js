@@ -61,7 +61,7 @@ export class Shops {
     // Kilat Respray: drive into the bay.
     const bay = a.respray.bay;
     const v = p.vehicle;
-    if (v && Math.hypot(v.x - bay[0], v.z - bay[1]) < 4 && Math.abs(v.speed) < 3 && this.cool <= 0) {
+    if (v && Math.hypot(v.x - bay[0], v.z - bay[1]) < 6.5 && Math.abs(v.speed) < 3 && this.cool <= 0) {
       this.cool = 6;
       if (w.money < 100) {
         w.notes.push({ slot: 'help', text: 'Kilat Respray: $100 for a new coat and a clean record. You are short.', duration: 4, key: 'help' });

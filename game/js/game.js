@@ -72,6 +72,12 @@ export class Game {
     this.shops = new Shops(this);
     this.placeWorldPickups();
     this.spawnParkedCars();
+    // Customer cars up on the lifts in Lin's Garage.
+    for (const [k, l] of this.city.anchors.garage.lifts.entries()) {
+      const car = this.vehicles.spawn(k ? 'kancil' : 'merpati', l[0], l[2], 0.05, { parked: true, color: k ? '#c0402a' : '#3a6a8a' });
+      car.y = l[1];
+      car.lifted = true;
+    }
     this.player.place(POINTS.homecomingCar[0] - 3, 1009.5, Math.PI);
     this.camCtl.face(Math.PI);
   }
@@ -238,6 +244,23 @@ export class Game {
     this.emit('respawn', { kind });
   }
 
+  /** Scripted fire at the nearest enemy (screenshot scenes only). */
+  autoShoot(dt) {
+    const p = this.player;
+    p.aim = 1;
+    this.autoT = (this.autoT ?? 0) - dt;
+    if (this.autoT > 0) return;
+    this.autoT = 0.09;
+    let best = null, bd = 60;
+    for (const q of this.peds.list) if (q.kind === 'gang' && !q.dead && Math.hypot(q.x - p.x, q.z - p.z) < bd) { bd = Math.hypot(q.x - p.x, q.z - p.z); best = q; }
+    if (!best) return;
+    const [ox, oy, oz] = this.combat.muzzleOf(p);
+    let dx = best.x - ox + (Math.random() - 0.5) * 1.5, dy = best.y + 1.3 - oy, dz = best.z - oz;
+    const l = Math.hypot(dx, dy, dz);
+    this.combat.fire(p, 'smg', ox, oy, oz, dx / l, dy / l, dz / l, 1);
+    p.recoil = 0.25;
+  }
+
   /** Smoke, fire and drift effects that vehicles emit every frame. */
   vehicleFx(dt) {
     const pt = this.fx.particles;
@@ -342,6 +365,9 @@ export class Game {
       p.updateFoot(dt, input, this.camCtl.yaw, aiming, this.controlsOn);
     }
     if (!this.entry.busy) this.arsenal.update(dt, input, this.controlsOn && !this.failState);
+    // Screenshot scenes: scripted driving and firing.
+    if (this.autoDrive && p.vehicle) this.autoDrive(dt);
+    if (this.autoFire) this.autoShoot(dt);
     p.updateAnim(dt);
     p.safeTimer = Math.max(0, (p.safeTimer ?? 0) - dt);
     // Death and arrest.

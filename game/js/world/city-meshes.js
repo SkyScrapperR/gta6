@@ -133,9 +133,11 @@ export function buildCoast(b, rng) {
   b.box(E / 2, 0.35, z0 + 3.5, E + 40, 0.12, 4.5);
   for (let x = -18; x < E + 20; x += 6) b.box(x, 0.12, z0 + 1.4, 0.25, 0.5, 0.25).box(x, 0.12, z0 + 5.6, 0.25, 0.5, 0.25);
   // Ferry pier on pylons.
-  b.paint(hex('#8a6038'), MAT.WOOD).box(450, 0.55, 1105, 16, 0.3, 92);
+  b.paint(hex('#8a6038'), MAT.WOOD).box(450, 0.55, 1081.5, 16, 0.3, 139);
   b.paint(hex('#5a4028'), MAT.WOOD);
-  for (let z = 1062; z <= 1150; z += 8) for (const x of [443, 457]) b.cylinder(x, -4, z, 0.3, 0.3, 4.7, 6);
+  for (let z = 1018; z <= 1150; z += 8) for (const x of [443, 457]) b.cylinder(x, -4, z, 0.3, 0.3, 4.7, 6);
+  for (let z = 1016; z <= 1150; z += 4) for (const x of [442.4, 457.6]) b.box(x, 1.2, z, 0.12, 1.0, 0.12);
+  b.box(442.4, 1.65, 1083, 0.1, 0.08, 134).box(457.6, 1.65, 1083, 0.1, 0.08, 134);
   // East pier (Viktor's escape boat).
   b.paint(hex('#8a8478'), MAT.CONCRETE).box(1090, 0.0, 690, 120, 0.6, 28);
   b.paint(YELLOW, MAT.PLAIN).box(1090, 0.31, 677, 120, 0.02, 0.3).box(1090, 0.31, 703, 120, 0.02, 0.3);

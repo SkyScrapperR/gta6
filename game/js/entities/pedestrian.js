@@ -205,6 +205,7 @@ export class Ped {
         break;
       }
       case 'flee': {
+        if (!this.threat) this.threat = [this.x - this.vx - 0.1, this.z - this.vz];
         const [fx, fz] = this.threat;
         let dx = this.x - fx, dz = this.z - fz;
         const d = Math.hypot(dx, dz) || 1;

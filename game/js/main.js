@@ -70,6 +70,7 @@ const app = {
   updateTitle(dt) {
     const g = this.game;
     this.titleT += dt;
+    g.time += dt;
     const u = (this.titleT * 0.012) % 1;
     const z = 590 - u * 290;
     const sway = Math.sin(this.titleT * 0.25) * 1.6;
@@ -185,6 +186,7 @@ async function boot() {
     if (code === 'Space' && app.state === 'cutscene') app.game.cutscene?.skip();
   });
   document.getElementById('loading').classList.add('done');
+  requestAnimationFrame(loop);
   if (params.has('shot')) {
     const { runShot } = await import('./debug/shots.js');
     await runShot(app, params.get('shot'));
@@ -201,7 +203,6 @@ async function boot() {
       app.renderer.setPreset(q);
     }, 2500);
   }
-  requestAnimationFrame(loop);
 }
 
 let last = performance.now();

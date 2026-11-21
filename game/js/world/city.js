@@ -296,8 +296,8 @@ export class City {
     this.col.addBox(1150, 670, 1154, 710, 50, { kind: 'seawall' });
     this.col.addBox(1030, 672, 1150, 675.5, 50, { kind: 'seawall' });
     this.col.addBox(1030, 704.5, 1150, 708, 50, { kind: 'seawall' });
-    this.col.addBox(436, 1062, 440, 1152, 50, { kind: 'seawall' });
-    this.col.addBox(460, 1062, 464, 1152, 50, { kind: 'seawall' });
+    this.col.addBox(441.9, 1018, 442.6, 1152, 1.7, { kind: 'rail' });
+    this.col.addBox(457.4, 1018, 458.1, 1152, 1.7, { kind: 'rail' });
     this.col.addBox(436, 1150, 464, 1154, 50, { kind: 'seawall' });
     // Moored boats along the east pier and the ferry pier.
     for (let x = 1045; x < 1140; x += 14) this.props.add('boat', x, -0.7, 712 + (x % 3), Math.PI / 2 + rng.range(-0.1, 0.1), 1, [1, 1, 1, 0], { solid: false });
@@ -436,7 +436,7 @@ export class City {
   /** Ground height at a point: kerbs and lots are raised, roads are at 0, piers at deck height. */
   groundAt(x, z) {
     if (x >= 1030 && x <= 1150 && z >= 676 && z <= 704) return 0.3;
-    if (x >= 442 && x <= 458 && z >= 1060 && z <= 1151) return 0.7;
+    if (x >= 442 && x <= 458 && z >= 1013 && z <= 1151) return 0.7;
     if (z > CITY + ROAD_HALF + 4) {
       if (z < CITY + ROAD_HALF + 7) return 0.41;
       const t = Math.min(1, (z - (CITY + ROAD_HALF + 4)) / (CITY + 95 - (CITY + ROAD_HALF + 4)));
