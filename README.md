@@ -12,17 +12,20 @@ Viktor Raza's Black Orchid syndicate squeezing the coast.
   Pantai Selara beach — with eleven landmarks, traffic lights, parks, piers and a day/night cycle.
 - **Story:** six missions with in-engine cutscenes (Homecoming, Yellow Fever, Collections, Wheelman,
   Low Tide, Orchid Falls), plus 12 Orchid tags, Kilat Respray and Bang Bang Arms.
-- **Systems:** traffic and pedestrians, car theft and carjacking, seven car models, a 5-star wanted level
-  with line-of-sight tracking, pursuits, officers on foot, roadblocks and the Rajawali helicopter; four
-  weapons, gang cover AI, explosions; HUD with a rotating minimap and GPS, big map, save games.
+- **Systems:** traffic and pedestrians, car theft and carjacking, nine vehicle models (including Motor Bebek
+  scooters with riders and Angkot Selara minibuses), a 5-star wanted level with line-of-sight tracking,
+  pursuits, officers on foot, roadblocks and the Rajawali helicopter; four weapons, gang cover AI,
+  explosions; HUD with a mission tracker, rotating minimap and GPS, a map & dossier screen, save games.
+- **Street life:** readable shop and blade signs (Es Cendol, Kopi Senja, Bengkel Motor, Mie Ombak, Bakso
+  Lestari, Laundry Kilau…) and warung carts with striped umbrellas on the sidewalks.
 - **Soundtrack:** three radio stations and a score, all synthesized live (see [MUSIC.md](MUSIC.md)).
 
 ## Screenshots
 
-![Title](screenshots/01-title.jpg)
-![Night chase](screenshots/02-night-chase.jpg)
-![Cutscene](screenshots/03-mission-cutscene.jpg)
-![Docks firefight](screenshots/04-docks-firefight.jpg)
+![Golden-hour chase: the Vesper GT sliding up a Kemuning shop street with four stars, cruisers behind and Gamelan Wave on the radio](screenshots/01-golden-hour-chase.jpg)
+![Mission cutscene: Kai and Mama Lin in the garage bay](screenshots/02-mission-cutscene.jpg)
+![Pause > Map & Dossier: districts, legend, blips, waypoint, missions, side content and stats](screenshots/03-map-dossier.jpg)
+![Low Tide: night firefight at Pier 9 as the Bison explodes](screenshots/04-docks-firefight.jpg)
 
 ## Run it
 

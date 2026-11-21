@@ -78,7 +78,7 @@ export class Menus {
   pause() {
     this.buttons([
       ['RESUME', () => this.app.resume()],
-      ['MAP', () => this.app.openMap()],
+      ['MAP & DOSSIER', () => this.app.openMap()],
       ['STATS', () => this.stats(() => this.pause())],
       ['CONTROLS', () => this.controls(() => this.pause())],
       ['SETTINGS', () => this.settings(() => this.pause())],

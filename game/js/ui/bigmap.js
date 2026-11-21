@@ -1,12 +1,14 @@
-// Full-screen map (M): the pre-rendered city with district names, landmark icons, a legend, the
+// Full-screen map and dossier (M, or Pause > Map): the pre-rendered city with district names, landmark
+// icons, a legend, a dossier panel (story missions and status, side content, stats), the
 // player, police and mission blips. Left click sets a waypoint (shown as a beam in the world and a
 // GPS route on the minimap); right click clears it. Mouse wheel zooms.
 
 import { MAP_MIN, MAP_SIZE, drawIcon } from './minimap.js';
 import { DISTRICTS, LANDMARKS, PITCH } from '../world/layout.js';
+import { MISSIONS } from '../story/missions.js';
 
 const LABELS = [
-  ['downtown', 5.5, 3.8], ['midtown', 4.5, 7.5], ['midtown', 7.4, 1.0], ['residential', 1.5, 4.6], ['docks', 9.0, 4.6], ['beach', 5.0, 10.35], ['park', 3.5, 4.5],
+  ['downtown', 5.5, 3.6], ['midtown', 4.5, 7.5], ['midtown', 7.4, 1.0], ['residential', 1.5, 8.3], ['docks', 9.0, 4.6], ['beach', 5.0, 10.35], ['park', 3.4, 5.05],
 ];
 
 export class BigMap {
@@ -28,6 +30,60 @@ export class BigMap {
     const cx = this.zoom > 1 ? W / 2 - (p.x - MAP_MIN - MAP_SIZE / 2) * scale : W / 2;
     const cy = this.zoom > 1 ? H / 2 - (p.z - MAP_MIN - MAP_SIZE / 2) * scale : H / 2;
     return { x0: cx - size / 2, y0: cy - size / 2, scale };
+  }
+
+  /** Dossier panel on the right: story missions and their status, side content and stats, all live. */
+  drawDossier(g, W, s) {
+    const w = this.world;
+    const m = w.missions;
+    const pw = 290 * s, x = W - pw - 24 * s;
+    let y = 24 * s;
+    const head = (text) => {
+      g.font = `900 ${15 * s}px "Arial Black", sans-serif`;
+      g.fillStyle = '#2ff3e0';
+      g.fillText(text, x + 14 * s, y + 12 * s);
+      y += 30 * s;
+    };
+    const row = (label, value, color = '#f2f4ff', valueColor = '#c8cce0') => {
+      g.font = `600 ${13.5 * s}px system-ui, sans-serif`;
+      g.textAlign = 'left';
+      g.fillStyle = color;
+      g.fillText(label, x + 14 * s, y);
+      g.textAlign = 'right';
+      g.fillStyle = valueColor;
+      g.fillText(value, x + pw - 14 * s, y);
+      g.textAlign = 'left';
+      y += 21 * s;
+    };
+    const stats = w.stats;
+    const t = Math.floor(stats.timePlayed);
+    const height = (30 + 6 * 21 + 16 + 30 + 3 * 21 + 16 + 30 + 6 * 21 + 10) * s;
+    g.fillStyle = 'rgba(8,10,20,0.85)';
+    g.fillRect(x, y, pw, height);
+    g.fillStyle = '#ff3fa4';
+    g.fillRect(x, y, 4 * s, height);
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    y += 6 * s;
+    head('STORY');
+    MISSIONS.forEach((def, i) => {
+      const active = m.active === def;
+      const status = active ? ['IN PROGRESS', '#ffd23a'] : i < m.passed ? ['PASSED', '#4dff9a'] : i === m.passed ? ['AVAILABLE', '#ffd23a'] : ['LOCKED', '#6a7088'];
+      row(`${i + 1}  ${def.title}`, status[0], i <= m.passed ? '#f2f4ff' : '#8a90a6', status[1]);
+    });
+    y += 16 * s;
+    head('SIDE CONTENT');
+    row('Orchid tags', `${w.tags.collected.size} / 12`);
+    row('Kilat Respray', 'clears stars · $100');
+    row('Bang Bang Arms', 'guns · ammo · armor');
+    y += 16 * s;
+    head('STATS');
+    row('Money', `$${w.money.toLocaleString('en-US')}`, '#f2f4ff', '#4dff9a');
+    row('Missions passed', `${m.passed} / 6`);
+    row('People taken down', String(stats.kills));
+    row('Officers taken down', String(stats.copsKilled));
+    row('Cars stolen', String(stats.carsStolen));
+    row('Time played', `${Math.floor(t / 3600)}h ${Math.floor((t % 3600) / 60)}m`);
   }
 
   toScreen(x, z) {
@@ -123,6 +179,7 @@ export class BigMap {
       g.fillStyle = '#f2f4ff';
       g.fillText(name, lx + 42 * s, ly + (52 + i * 24) * s);
     });
+    this.drawDossier(g, W, s);
     g.textAlign = 'center';
     g.fillStyle = '#c8cce0';
     g.fillText('Left click: set waypoint   ·   Right click: clear   ·   Wheel: zoom   ·   M / Esc: close', W / 2, H - 22 * s);

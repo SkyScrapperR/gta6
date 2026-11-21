@@ -30,12 +30,84 @@ function midGame(app) {
 
 export async function runShot(app, name) {
   const g = app.game;
-  const scenes = { 1: 'title', 2: 'chase', 3: 'cutscene', 4: 'docks' };
+  const scenes = { 1: 'golden', 2: 'cutscene', 3: 'map', 4: 'docks' };
   name = scenes[name] ?? name;
   if (name === 'title') {
     app.enterTitle();
     app.titleT = 18;
     await wait(app, 4);
+  } else if (name === 'golden') {
+    // Yellow Fever gone loud: the Vesper sliding up a Kemuning shop street at golden hour, three
+    // cruisers and the Rajawali behind it, one cruiser ploughing into a car it tried to pass.
+    midGame(app);
+    app.setState('playing');
+    g.env.hour = 17.35;
+    g.env.rain = g.env.targetRain = 0;
+    const lane = 697.4, z0 = 322;
+    const v = g.vehicles.spawn('vesper', lane, z0, Math.PI, { color: '#f2c41a' });
+    g.player.place(lane - 2, z0, Math.PI);
+    g.entry.seq = null;
+    g.player.vehicle = v;
+    v.driver = 'player';
+    g.player.seat = 1;
+    g.populate(24, 34);
+    for (const [type, x, z] of [['motor', 702.4, 300], ['motor', 705.8, 268], ['angkot', 705.8, 318], ['motor', 702.4, 330]]) {
+      const t = g.traffic.spawnOne(0, 1e9, true, type);
+      if (t) { t.x = x; t.z = z; t.yaw = x < 700 ? Math.PI : 0; t.speed = x < 700 ? 9 : 8; }
+    }
+    g.missions.active = MISSIONS[1];
+    g.missions.done = ["Steal Rendy's yellow Vesper GT"];
+    g.missions.objText = 'Lose the cops, then deliver the Vesper';
+    g.missions.objSub = 'Car condition 82% (keep it above 25%) · Kilat Respray clears your stars for $100';
+    g.wanted.setStars(4);
+    g.wanted.reveal();
+    const cops = [];
+    for (let k = 0; k < 3; k++) {
+      const x = k === 1 ? 694.2 : lane;
+      const c = g.vehicles.spawn('patrol', x, z0 + 10 + k * 9, Math.PI);
+      g.police.enlist(c);
+      Object.assign(c, { speed: 21, siren: true, ai: null, driver: 'shot', shotLane: x });
+      cops.push(c);
+    }
+    // The car the third cruiser is about to hit, stopped across its lane with a smoking hood.
+    const victim = g.vehicles.spawn('kancil', 694.0, z0 - 48, Math.PI * 0.62, { color: '#3a6a8a' });
+    victim.health = 420;
+    victim.driver = null;
+    g.autoPolice = () => { for (const c of cops) { c.throttle = c.speed < 22 ? 0.95 : 0.25; c.steer = (c.shotLane - c.x) * 0.06 - Math.sin(c.yaw - Math.PI) * 1.2; c.siren = true; } };
+    v.speed = 21;
+    let crashT = null;
+    const onCrash = g.onCrash.bind(g);
+    g.onCrash = (a, speed, other) => { onCrash(a, speed, other); if (crashT === null && (a === victim || other === victim)) crashT = g.time; };
+    // Hold the lane, then flick into a slide just before the shot.
+    const driftAt = g.time + 2.7;
+    g.autoDrive = () => {
+      const drift = g.time > driftAt;
+      v.throttle = v.speed < 21 ? 0.8 : 0.2;
+      v.steer = drift ? -0.3 : (lane - v.x) * 0.08 - Math.sin(v.yaw - Math.PI) * 1.2;
+      v.handbrake = drift && g.time < driftAt + 0.25;
+    };
+    g.heli.spawnNear(v.x, v.z + 30);
+    Object.assign(g.heli, { x: v.x + 8, z: v.z + 60, y: 15 });
+    g.camCtl.lookOffset = 2.5;
+    g.camCtl.lookPitch = 0.02;
+    g.camCtl.holdLook = true;
+    app.audio.start(); // what the player's first key press does
+    g.music?.radioOn?.(2);
+    const end = g.time + 6;
+    await new Promise((res) => { const f = () => ((crashT !== null && g.time > crashT + 0.12) || g.time > end ? res() : requestAnimationFrame(f)); f(); });
+  } else if (name === 'map') {
+    // Pause > Map & Dossier, mid-game: three missions passed, Wheelman next, a waypoint set.
+    midGame(app);
+    app.setState('playing');
+    g.env.hour = 15;
+    g.player.place(452, 520, 0);
+    for (const i of [0, 3, 5, 8]) g.tags.collected.add(i);
+    Object.assign(g.stats, { kills: 38, copsKilled: 6, carsStolen: 17, shots: 912, timePlayed: 2 * 3600 + 14 * 60 });
+    g.waypoint = [g.city.anchors.bank.getaway[0], g.city.anchors.bank.getaway[1]];
+    await wait(app, 1);
+    app.openMap();
+    // The map pauses the world, so wait a few real frames for it to draw.
+    await new Promise((res) => { let n = 0; const f = () => (++n > 10 ? res() : requestAnimationFrame(f)); f(); });
   } else if (name === 'chase') {
     midGame(app);
     app.setState('playing');
@@ -89,9 +161,10 @@ export async function runShot(app, name) {
     g.env.hour = 23.2;
     const fr = g.city.anchors.freight;
     const y = fr.yard;
-    // Kai aims across the yard: guards behind lit containers, the Bison truck ahead to the right.
-    const px = fr.truck[0] + 9, pz = fr.truck[1] + 21;
-    const face = Math.atan2(fr.truck[0] - 3 - px, fr.truck[1] - pz);
+    // Kai in the yard behind a parked van, aiming across it: guards behind the containers 10-20 m
+    // out, the Bison under the gantry crane ahead to the left.
+    const px = fr.truck[0] + 18, pz = fr.truck[1] + 3.5;
+    const face = Math.atan2(fr.truck[0] + 6 - px, fr.truck[1] - 5.5 - pz);
     g.player.place(px, pz, face);
     g.camCtl.face(face);
     g.camCtl.pitch = -0.02;
@@ -100,13 +173,21 @@ export async function runShot(app, name) {
     const truck = g.vehicles.spawn('bison', fr.truck[0], fr.truck[1], Math.PI / 2, { color: '#3a2a4a' });
     g.missionNoCops = true;
     for (const s of g.parkSlots) if (Math.hypot(s.x - px, s.z - pz) < 60) { s.gone = true; if (s.vehicle) g.vehicles.remove(s.vehicle); s.vehicle = null; }
-    const spots = [[fr.truck[0] + 5, fr.truck[1] + 7], [fr.truck[0] - 6, fr.truck[1] + 9], [fr.truck[0] + 13, fr.truck[1] + 4], [fr.truck[0] - 1, fr.truck[1] + 4], ...fr.guardSpots.slice(0, 2)];
-    for (const [x, z] of spots) {
+    // Four guards at the container ends and by the truck, 9-15 m out; two already down near Kai.
+    const spots = [[12.3, -2.9], [24, -2.3], [16, -7.3], [3.5, 2.5]].map(([dx, dz]) => [fr.truck[0] + dx, fr.truck[1] + dz]);
+    spots.push([fr.truck[0] + 12, fr.truck[1] + 2.5], [fr.truck[0] + 22, fr.truck[1] - 1]);
+    const lx = Math.cos(face), lz = -Math.sin(face); // Kai's left
+    const van = g.vehicles.spawn('bajak', px + lx * 4.2 - Math.sin(face) * 0.5, pz + lz * 4.2 - Math.cos(face) * 0.5, face + 0.35, { parked: true, color: '#5a8a5a' });
+    van.driver = null;
+    spots.forEach(([x, z], k) => {
+      const weapon = k % 2 ? 'smg' : 'pistol';
       const e = g.peds.spawn('gang', x, z, { kind: 'gang', health: 900, state: 'scripted' });
       e.keep = true;
-      e.weapon = 'pistol';
-      e.brain = new GangBrain(g, { weapon: 'pistol', accuracy: 0.0, alerted: true });
-    }
+      e.weapon = weapon;
+      // Each guard holds the spot it was posted at and peeks out from there.
+      e.brain = new GangBrain(g, { weapon, accuracy: 0.0, alerted: true });
+      Object.assign(e.brain, { state: 'cover', cover: [x, z], coverT: 0, peekT: 0.3 + k * 0.45 });
+    });
     // Two guards already down.
     for (const q of g.peds.list.filter((p) => p.kind === 'gang').slice(4)) q.damage(5000, px, pz, 'player');
     g.player.god = true;
@@ -119,12 +200,17 @@ export async function runShot(app, name) {
       if (t !== g.missions.objText) { g.missions.objText = t; g.missions.objSub = 'Shoot the truck until it explodes'; }
     };
     g.autoFire = true;
-    // Pulled-back over-the-shoulder framing: Kai small on the left third, the yard ahead.
+    // Pulled-back over-the-shoulder framing: Kai on the left third at about a quarter of the frame height.
     const fx = Math.sin(face), fz = Math.cos(face), rx = -fz, rz = fx;
-    g.debugCam = { pos: [px - fx * 13 + rx * 3.4, 4.2, pz - fz * 13 + rz * 3.4], target: [px + fx * 30 + rx * 3.4, 2.2, pz + fz * 30 + rz * 3.4], fov: 50 };
+    g.debugCam = { pos: [px - fx * 8.4 + rx * 2.2, 2.7, pz - fz * 8.4 + rz * 2.2], target: [px + fx * 30 + rx * 2.2, 2.6, pz + fz * 30 + rz * 2.2], fov: 52 };
+    let npcShot = -1;
+    const npcFire = g.combat.npcFire.bind(g.combat);
+    g.combat.npcFire = (...a) => { npcShot = g.time; return npcFire(...a); };
     await wait(app, 2.5);
     truck.damage(5000);
-    await wait(app, 0.28);
+    // Catch the fireball while it is still orange, on a frame right after a guard fires.
+    const t0 = g.time;
+    await new Promise((res) => { const f = () => ((g.time > t0 + 0.2 && g.time - npcShot < 0.05) || g.time > t0 + 0.55 ? res() : requestAnimationFrame(f)); f(); });
   } else if (name === 'kaicop') {
     midGame(app);
     app.setState('playing');

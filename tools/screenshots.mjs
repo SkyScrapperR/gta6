@@ -11,13 +11,15 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const port = 8092;
 const server = spawn(process.execPath, [join(root, 'serve.ts'), '--port', String(port)], { stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 800));
-const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'] });
+const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-const names = { 1: '01-title', 2: '02-night-chase', 3: '03-mission-cutscene', 4: '04-docks-firefight' };
+const names = { 1: '01-golden-hour-chase', 2: '02-mission-cutscene', 3: '03-map-dossier', 4: '04-docks-firefight' };
+const only = process.argv.slice(2); // e.g. `node tools/screenshots.mjs 1 4` retakes just those
 for (const [n, name] of Object.entries(names)) {
+  if (only.length && !only.includes(n)) continue;
   await page.goto(`http://localhost:${port}/?q=high&shot=${n}`);
   await page.bringToFront();
-  await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 120000 });
+  await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });
   await page.waitForTimeout(300);
   let quality = 90;
   let buf;

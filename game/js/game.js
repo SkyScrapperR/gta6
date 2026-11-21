@@ -162,6 +162,18 @@ export class Game {
       this.camera.addShake(Math.min(0.8, speed / 30));
       if (other?.police) this.wanted.crime(2);
     }
+    // Metal on metal: sparks at the contact point, and dust and smoke on hard hits.
+    if (speed > 5) {
+      const hit = other && Number.isFinite(other.x) && Number.isFinite(other.z);
+      const cx = hit ? (v.x + other.x) / 2 : v.x + v.forward[0] * v.def.len * 0.5;
+      const cz = hit ? (v.z + other.z) / 2 : v.z + v.forward[1] * v.def.len * 0.5;
+      const pt = this.fx.particles;
+      pt.sparks(cx, v.y + 0.6, cz, 0, 1, 0, Math.min(36, 8 + speed));
+      if (speed > 10) {
+        pt.dust(cx, v.y + 0.3, cz);
+        for (let k = 0; k < 4; k++) pt.carSmoke(cx, v.y + 0.9, cz, false);
+      }
+    }
     this.emit('crash', { v, speed, x: v.x, z: v.z });
   }
 
