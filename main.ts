@@ -134,6 +134,18 @@ const dossier = buildDossier(out, CAPS);
 writeFileSync(join(out, 'dossier.json'), dossier);
 report.push(`dossier ${dossier.length} bytes`);
 
+// 6. Dossier coverage: which sources the judge's text window shows whole, which one is cut, how many are left out.
+const text: string = JSON.parse(new TextDecoder().decode(dossier)).text;
+const shown: { path: string; lines: number; bytes: number; cut: string | null }[] = [];
+const heading = /^### game\/(\S+) \((\d+) lines?, (\d+) bytes\)$/gm;
+for (let m = heading.exec(text); m; m = heading.exec(text)) shown.push({ path: m[1], lines: Number(m[2]), bytes: Number(m[3]), cut: null });
+const partial = /\[(\d+) of this file's (\d+) lines not shown\.\]/.exec(text);
+if (partial && shown.length) shown[shown.length - 1].cut = `${Number(partial[2]) - Number(partial[1])}/${partial[2]} lines shown`;
+const leftOut = /\[Cut at \d+ bytes: (\d+) files? and (\d+) bytes of source left out\.\]/.exec(text);
+const sourceCount = gameFiles.filter((f) => /\.(html|js|mjs|css|json|glsl|vert|frag|wgsl)$/.test(f)).length;
+report.push(`dossier coverage: ${shown.filter((s) => !s.cut).length} whole, ${partial ? 1 : 0} cut, ${leftOut ? leftOut[1] : 0} left out of ${sourceCount} sources`);
+for (const s of shown) report.push(`  ${s.cut ? 'CUT ' : 'whole'} ${s.path} (${s.bytes} bytes${s.cut ? `, ${s.cut}` : ''})`);
+
 console.log(report.join('\n'));
 console.log('SELARA BAY handed in.');
 void dirname;

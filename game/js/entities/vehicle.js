@@ -4,7 +4,7 @@
 // visual body roll and pitch, damage stages (smoke -> fire -> explosion -> burnt wreck), lights,
 // sirens and the door animation used for entering, exiting and carjacking.
 
-import { VEHICLES, VB, buildVehicle, doorHinge } from './vehicle-model.js';
+import { VEHICLES, VB, doorHinge } from './vehicle-specs.js';
 import { m4compose, m4mul, clamp, damp, wrapAngle, lerp, hex } from '../core/math.js';
 
 let nextId = 1;
@@ -247,12 +247,11 @@ export class Vehicle {
 }
 
 export class VehicleSystem {
-  constructor(gl, city) {
-    this.gl = gl;
+  constructor(models, city) {
     this.city = city;
     this.list = [];
     this.meshes = {};
-    for (const t of Object.keys(VEHICLES)) this.meshes[t] = buildVehicle(gl, t);
+    for (const t of Object.keys(VEHICLES)) this.meshes[t] = models.vehicle(t);
   }
 
   spawn(type, x, z, yaw, opts = {}) {

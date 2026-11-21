@@ -1,4 +1,45 @@
 <!doctype html>
+<!--
+  SELARA BAY — Heat on the Coast. An original open-world crime game, playable offline in desktop Chrome.
+
+  STORY  Kai Santoso returns to Selara Bay after five years and takes on Viktor Raza's Black Orchid
+  syndicate with his aunt Mama Lin (Lin's Garage) and the hacker Dex. Six missions with in-engine
+  cutscenes, retry from the marker, payouts and autosave (story/missions.js, story/mission-scripts.js):
+    1 Homecoming     ferry arrival at sunset, first drive to Lin's Garage, safehouse unlocked
+    2 Yellow Fever   steal Rendy's yellow Vesper GT (1 star) and deliver it with at least 25% health
+    3 Collections    defeat 4 Orchid enforcers at Kedai Orchid, return the cash bag
+    4 Wheelman       pick up Dex, 15 s at Bank Samudra, alarm sets 3 stars, lose the cops, drop him home
+    5 Low Tide       night raid on Orchid Freight: 6 guards and the Bison weapons truck, escape the docks
+    6 Orchid Falls   wreck Viktor's Vesper before his boat, defeat him (200 HP boss), sunrise ending, credits
+  Side content: 12 Orchid tags, Kilat Respray (clears the wanted level for $100), Bang Bang Arms.
+
+  CITY  10x10 blocks of 100 m on a coastal island: Kota Lama towers, Kemuning shops, Bukit Asri houses,
+  Pier 9 Docks, Pantai Selara beach, three parks; eleven landmarks; traffic lights at every junction;
+  day/night cycle (1 s = 1 game minute) and rain with wet roads.
+  PEOPLE AND TRAFFIC  Left-hand traffic on the road graph (lights, braking, honking, deadlock breaker),
+  pedestrians on sidewalks and zebra crossings (chatting, phones, fleeing, diving away), parked cars,
+  car theft and carjacking with an animated door.
+  WANTED  0-5 stars from crimes; police see you only with line of sight; unseen, the stars flash and a
+  search area shows on the minimap until they clear. Pursuit cars ram, officers on foot arrest (1 star)
+  or shoot (2+) and re-board their car; roadblocks and the Rajawali helicopter with a searchlight at
+  3+ stars; the helicopter fires at 4+ and can be shot down.
+  COMBAT  Fists, Kobra 9 pistol, Wasp SMG, Thunder shotgun; hitscan, tracers, muzzle flashes, sparks,
+  decals, shell casings, explosions; Black Orchid gang AI uses cover. FLATLINED and CUFFED respawns.
+  HUD  Clock and weather, money, weapon and ammo, five stars, rotating minimap with GPS route and
+  health/armor arcs, objective line, subtitles, pop-ups; full-screen map with waypoints; title, pause,
+  settings (quality preset, volumes, sensitivity, invert Y), stats; save at the safehouse (localStorage).
+  AUDIO  Everything synthesized with Web Audio. Radio (R in a car): Selara Nights FM (Neon Tide, Coastline
+  Run, Orchid After Dark, Midnight Merpati), Ombak Lo-Fi (Rain on Kemuning, Warung at 2AM, Slow Waves),
+  Gamelan Wave (Bukit Asri Sunrise, Pier 9, Kecak Circuit); title theme Heat on the Coast; chase layers.
+  ENGINE  Custom WebGL2 renderer (no libraries): one lit shader with procedural materials, shadow map,
+  time-of-day sky, forward point/spot lights, water, HDR bloom, auto exposure, ACES; Low/Medium/High.
+
+  FILE MAP  js/main.js boot and states · js/systems.js gameplay registry · js/game.js world wiring ·
+  story/ missions, scripts, dialogue, cutscenes · ai/ police, traffic, gang combat · combat/ weapons,
+  arsenal, pickups · entities/ player, vehicles, pedestrians, helicopter, animator, models · ui/ HUD,
+  minimap, map, menus · audio/ sfx, music (synth, sequencer, radio, songs) · world/ city generation ·
+  engine/ WebGL2 renderer, shaders, sky, post · fx/ particles, decals, markers · save.js · models.js
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">

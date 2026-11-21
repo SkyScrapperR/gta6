@@ -4,9 +4,8 @@
 // ejected shell casings. Recoil kicks the aim and blooms the crosshair. NPCs fire with imperfect
 // accuracy through the same code.
 
-import { MeshBuilder, MAT } from '../engine/mesh-builder.js';
-import { createMesh } from '../engine/gl.js';
-import { hex, m4mul, m4compose, clamp } from '../core/math.js';
+// Meshes come from the world's model library (world.models), so this module stays pure gameplay.
+import { m4mul, m4compose, clamp } from '../core/math.js';
 
 export const WEAPONS = {
   fists: { name: 'Fists', icon: 'fist', melee: true, damage: 14, rate: 0.42, range: 1.7 },
@@ -16,39 +15,13 @@ export const WEAPONS = {
 };
 export const WEAPON_ORDER = ['fists', 'pistol', 'smg', 'shotgun'];
 
-/** Weapon meshes, built along +Z (the barrel), grip at the origin. */
-function buildWeaponMesh(gl, key) {
-  const b = new MeshBuilder();
-  const dark = hex('#1d1e22'), metal = hex('#5a5e66');
-  if (key === 'pistol') {
-    b.paint(dark, MAT.METAL).bevelBox(0, 0.04, 0.06, 0.035, 0.05, 0.2, 0.012);
-    b.paint(metal, MAT.METAL).box(0, 0.075, 0.07, 0.03, 0.02, 0.2);
-    b.paint(dark, MAT.PLAIN).push().transform(0, -0.02, -0.01, 0, -0.25, 0).bevelBox(0, -0.03, 0, 0.032, 0.11, 0.045, 0.01).pop();
-  } else if (key === 'smg') {
-    b.paint(dark, MAT.METAL).bevelBox(0, 0.04, 0.08, 0.045, 0.07, 0.3, 0.015);
-    b.paint(metal, MAT.METAL).cylinder(0, 0.04, 0.23, 0.012, 0.012, 0.0001, 6);
-    b.push().transform(0, 0.04, 0.23, 0, Math.PI / 2, 0).cylinder(0, 0, 0, 0.014, 0.014, 0.12, 6).pop();
-    b.paint(dark, MAT.PLAIN).box(0, -0.05, 0.1, 0.03, 0.14, 0.035).box(0, -0.03, -0.02, 0.03, 0.09, 0.04).box(0, 0.03, -0.13, 0.025, 0.04, 0.12);
-  } else if (key === 'shotgun') {
-    b.paint(hex('#6a4a2a'), MAT.WOOD).bevelBox(0, 0.0, -0.12, 0.045, 0.08, 0.3, 0.015);
-    b.paint(dark, MAT.METAL).bevelBox(0, 0.03, 0.15, 0.05, 0.06, 0.3, 0.012);
-    b.paint(metal, MAT.METAL).push().transform(0, 0.05, 0.25, 0, Math.PI / 2, 0).cylinder(0, 0, 0, 0.018, 0.018, 0.4, 8).pop();
-    b.paint(hex('#6a4a2a'), MAT.WOOD).push().transform(0, 0.015, 0.3, 0, Math.PI / 2, 0).cylinder(0, 0, 0, 0.025, 0.025, 0.16, 8).pop();
-  }
-  return createMesh(gl, b.build());
-}
 
 export class Combat {
   constructor(world) {
     this.world = world;
-    this.meshes = {};
-    for (const k of ['pistol', 'smg', 'shotgun']) this.meshes[k] = buildWeaponMesh(world.gl, k);
+    this.meshes = world.models.weapons;
     this.casings = [];
-    this.casingMesh = (() => {
-      const b = new MeshBuilder();
-      b.paint(hex('#d8a83a'), MAT.METAL).cylinder(0, -0.01, 0, 0.006, 0.006, 0.02, 5);
-      return createMesh(world.gl, b.build());
-    })();
+    this.casingMesh = world.models.weapons.casing;
     this.bloom = 0; // crosshair spread
     this.hitMarker = 0;
   }

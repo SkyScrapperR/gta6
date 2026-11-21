@@ -3,14 +3,15 @@
 // renderer reads. Vehicle entry/exit and combat hook in from their own systems.
 
 import { clamp, damp, dampAngle, wrapAngle } from '../core/math.js';
-import { buildCharacter, Animator, LOOKS } from './character-model.js';
+import { Animator } from './animator.js';
+import { LOOKS } from './looks.js';
 import { m4compose } from '../core/math.js';
 import { CarEntry } from './car-entry.js';
 
 export class Player {
-  constructor(gl, city) {
+  constructor(models, city) {
     this.city = city;
-    this.mesh = buildCharacter(gl, LOOKS.kai);
+    this.mesh = models.character('kai', LOOKS.kai);
     this.anim = new Animator(1.0);
     this.x = 0;
     this.y = 0;

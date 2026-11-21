@@ -3,7 +3,8 @@
 // cars, get knocked down when hit and drop cash when they die (non-graphic: they just lie still).
 // The same Ped class also carries cops, gang members and story characters with scripted brains.
 
-import { buildCharacter, Animator, LOOKS, randomLook } from './character-model.js';
+import { Animator } from './animator.js';
+import { LOOKS, randomLook } from './looks.js';
 import { clamp, damp, dampAngle, makeRng, m4compose } from '../core/math.js';
 import { PITCH, GRID } from '../world/layout.js';
 
@@ -311,7 +312,7 @@ export class PedSystem {
     let m = this.meshes.get(key);
     if (!m) {
       const look = key.startsWith('civ') ? this.civLooks[Number(key.slice(3)) % this.civLooks.length] : LOOKS[key];
-      m = buildCharacter(this.gl, look);
+      m = this.world.models.character(key, look);
       this.meshes.set(key, m);
     }
     return m;

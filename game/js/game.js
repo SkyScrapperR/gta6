@@ -25,6 +25,7 @@ import { MissionSystem } from './story/missions.js';
 import { OrchidTags, Shops } from './story/side-content.js';
 import { POINTS } from './world/layout.js';
 import { makeRng } from './core/math.js';
+import { ModelLibrary } from './models.js';
 
 export class Game {
   constructor(renderer, input) {
@@ -51,9 +52,10 @@ export class Game {
 
   async load(onProgress) {
     await this.city.generate(onProgress);
-    this.player = new Player(this.gl, this.city);
+    this.models = new ModelLibrary(this.gl);
+    this.player = new Player(this.models, this.city);
     this.camCtl = new CameraController(this.camera, this.city.col);
-    this.vehicles = new VehicleSystem(this.gl, this.city);
+    this.vehicles = new VehicleSystem(this.models, this.city);
     this.vehicles.onCrash = (v, speed, other) => this.onCrash(v, speed, other);
     this.vehicles.onPropHit = (prop, v) => this.onPropHit(prop, v);
     this.vehicles.onExplode = (v) => this.onVehicleExplode(v);

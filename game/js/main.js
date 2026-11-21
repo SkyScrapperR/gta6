@@ -3,17 +3,10 @@
 // The title screen is the live city at dusk with a low camera flying between towers. Debug and
 // screenshot scenes come from ?shot=N (debug/shots.js). Audio starts on the first user gesture.
 
+// Gameplay systems first (see systems.js), then the engine: the renderer and raw input.
+import { Game, HUD, BigMap, Menus, AudioSystem, MusicDirector, hasSave, loadSave, applySave, loadSettings, saveSettings, WEAPONS, VEHICLES } from './systems.js';
 import { Renderer } from './engine/renderer.js';
 import { Input } from './core/input.js';
-import { Game } from './game.js';
-import { HUD } from './ui/hud.js';
-import { BigMap } from './ui/bigmap.js';
-import { Menus } from './ui/menus.js';
-import { AudioSystem } from './audio/sfx.js';
-import { MusicDirector } from './audio/music/radio.js';
-import { hasSave, loadSave, applySave, loadSettings, saveSettings } from './save.js';
-import { WEAPONS } from './combat/weapons.js';
-import { VEHICLES } from './entities/vehicle-model.js';
 import { damp } from './core/math.js';
 
 const canvas = document.getElementById('view');
