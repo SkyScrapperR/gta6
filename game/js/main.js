@@ -33,6 +33,7 @@ async function boot() {
     text.textContent = msg;
   });
   if (params.has('hour')) app.game.env.hour = Number(params.get('hour'));
+  app.game.populate();
   document.getElementById('loading').classList.add('done');
   app.setState('playing');
   requestAnimationFrame(loop);
@@ -52,6 +53,7 @@ function loop(now) {
   }
   const dt = Math.min(raw, 1 / 20);
   const g = app.game;
+  g.fps = app.fps || 60;
   if (app.state === 'playing') g.update(dt * g.timeScale);
   g.render(dt);
   app.input.endFrame();
