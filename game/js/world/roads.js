@@ -50,7 +50,7 @@ export class RoadGraph {
   /** Lane endpoints for travelling a -> b (traffic keeps left). */
   laneOf(a, b) {
     const dx = Math.sign(b.x - a.x), dz = Math.sign(b.z - a.z);
-    const lx = -dz, lz = dx; // left of travel
+    const lx = dz, lz = -dx; // left of travel (x east, z south: heading south, east is on the left)
     return {
       dir: [dx, dz],
       start: [a.x + dx * STOP_BACK + lx * LANE, a.z + dz * STOP_BACK + lz * LANE],

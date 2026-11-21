@@ -44,8 +44,8 @@ export function buildRoads(b, i, j, rng) {
       for (let v = -H + 0.6; v < H - 0.6; v += 1.1) mk(lo, hi, v, v + 0.55, WHITE, 0.014);
       const sl = end + dir * 5.2;
       // Stop line across the incoming (left) half.
-      if (dir === 1) mk(Math.min(sl, sl + 0.4), Math.max(sl, sl + 0.4), axis === 'x' ? -4.4 : 0.15, axis === 'x' ? -0.15 : 4.4, WHITE);
-      else mk(Math.min(sl, sl - 0.4), Math.max(sl, sl - 0.4), axis === 'x' ? 0.15 : -4.4, axis === 'x' ? 4.4 : -0.15, WHITE);
+      if (dir === 1) mk(Math.min(sl, sl + 0.4), Math.max(sl, sl + 0.4), axis === 'x' ? 0.15 : -4.4, axis === 'x' ? 4.4 : -0.15, WHITE);
+      else mk(Math.min(sl, sl - 0.4), Math.max(sl, sl - 0.4), axis === 'x' ? -4.4 : 0.15, axis === 'x' ? -0.15 : 4.4, WHITE);
     }
     // Yellow no-parking hatch near junctions.
     for (const end of [a0 + 6.5, a1 - 9.5]) {
@@ -104,7 +104,10 @@ export function buildCoast(b, rng) {
   b.paint(hex('#b5ad9d'), MAT.CONCRETE);
   b.box(-18.25, CURB / 2, E / 2, 23.5, CURB, E + 60);
   b.box(E / 2, CURB / 2, -18.25, E + 13, CURB, 23.5);
-  b.box(E + 18.25, CURB / 2, E / 2 - 20, 23.5, CURB, E + 20);
+  b.box(E + 18.25, CURB / 2, (E + ROAD_HALF - 30) / 2, 23.5, CURB, E + ROAD_HALF + 30);
+  b.box(E / 2, CURB / 2, E + ROAD_HALF + SIDEWALK / 2, E + 60, CURB, SIDEWALK); // coast-road sidewalk
+  b.paint(hex('#d8d4cc'), MAT.CONCRETE).box(E / 2, CURB / 2 + 0.005, E + ROAD_HALF + 0.15, E + 13, CURB + 0.01, 0.3);
+  b.paint(hex('#b5ad9d'), MAT.CONCRETE);
   b.paint(hex('#5f9f4a'), MAT.GRASS);
   b.box(-18, CURB + 0.02, E / 2, 10, 0.05, E);
   b.box(E / 2, CURB + 0.02, -18, E, 0.05, 10);

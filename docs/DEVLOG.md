@@ -1,7 +1,7 @@
 # SELARA BAY — Dev log
 
 ## Current step
-Step 1 (repo setup) — done when committed and pushed.
+Step 5 (vehicles) done → next: step 6 traffic, pedestrians, wanted level, police.
 
 ## Kit contract (gta6-01), summarized from RULES.txt / competition.yaml / starter
 - **main.ts** at repo root, Node 22 (grader runs 22.23.x), standard library only. Copies `game/` and `screenshots/`
@@ -24,17 +24,34 @@ Step 1 (repo setup) — done when committed and pushed.
 - **README** (repo_readme): 3 live badge images, each linked to make.fun; **GitHub About** (repo_about): website on
   make.fun + topic `makefun` — the user must set this.
 - **Ownership**: repo owner is GitHub `SkyScrapperR`, which is the account → `.makefun/owner.json` only needed if
-  the user signs in with a wallet-only account. Not added for now (note for the user at the end).
+  the user signs in with a wallet-only account. Not added (note for the user at the end).
 - Run record `makefun-run.json` is produced by `makefun submit`, not by main.ts.
-- LICENSE: MIT, "I Wayan Bagus Somabawa".
 
 ## Decisions
 - Custom WebGL2 engine, plain ES modules, no build. Simulate in 2D (x,z), render in 3D.
+- World axes: x east, **z south** (top-down map draws x right, z down — consistent with right-handed 3D).
+  Forward for yaw h = (sin h, cos h). Left of travel direction d = (dz, -dx). Traffic keeps LEFT; cars are
+  right-hand drive (driver on body −X side, door index 1).
+- One lit shader for everything; material id + bone index packed in the vertex (`mat + 32*bone`).
+  Rigged meshes (characters, cars) use up to 16 bone matrices; static chunks use identity.
+- Parked cars are streamed around the camera (150 m in, 210 m out) — spawning all ~800 killed the GPU.
+- Playwright tests must call `page.bringToFront()`: Chrome throttles rAF for occluded windows.
 - Commits: plain messages, no AI trailers (user instruction).
+
+## Measured
+- Frame time (render+sync readback, 1280×720): Low 36 ms, Medium 53 ms, High 69 ms; live rAF on High ≈ 33 fps
+  when the window is in front.
 
 ## File map
 - `main.ts` hand-in + deterministic self-checks · `serve.ts` local static server · `vendor/makefun-game.ts` kit lib
-- `game/index.html` (placeholder boot page at step 1)
+- `game/js/main.js` boot/loop/states · `game/js/game.js` gameplay world wiring
+- `game/js/core/` math (mat4, rng), input · `game/js/engine/` gl, renderer, shaders/*, mesh-builder, camera,
+  frustum, shadows, sky (time of day), post (bloom/exposure/ACES), signs (canvas atlas), water
+- `game/js/world/` layout (map data), city (generation), city-meshes (roads/sidewalks/coast), buildings,
+  landmarks, props (instanced), collision (grid), roads (graph/lanes/signals/A*)
+- `game/js/entities/` character-model (rig + animator), player, camera-controller, vehicle-model, vehicle,
+  car-entry
 
-## Open bugs
-- none yet
+## Open bugs / todo
+- Skid marks / tyre smoke need the particle system (step 7).
+- Check seated pose vs roof after roof/seat change.

@@ -33,22 +33,32 @@ const DEFS = {
   palm: {
     r: 0.3, h: 9,
     build(b) {
+      // Curved trunk from short tapered segments, then drooping fronds as cheap double-sided strips.
       b.paint(hex('#8a6a48'), MAT.WOOD);
       let x = 0, y = 0;
-      for (let s = 0; s < 6; s++) {
-        const nx = x + 0.12 * s, ny = y + 1.45;
-        b.limb(x, y, 0, nx, ny, 0, 0.26 - s * 0.025, 0.24 - s * 0.025, 7);
+      for (let s = 0; s < 5; s++) {
+        const nx = x + 0.14 * s, ny = y + 1.75;
+        b.push().transform(x, y, 0, 0, 0, -Math.atan2(nx - x, ny - y));
+        b.cylinder(0, 0, 0, 0.26 - s * 0.03, 0.23 - s * 0.03, Math.hypot(nx - x, ny - y) + 0.05, 7, { top: false });
+        b.pop();
         x = nx; y = ny;
       }
       b.paint(hex('#2f8f3c'), MAT.FOLIAGE);
-      for (let k = 0; k < 8; k++) {
-        const a = (k / 8) * Math.PI * 2;
-        b.push().transform(x, y, 0, a, 0, 0);
-        b.push().transform(0, 0, 0, 0, 1.05 + (k % 2) * 0.25, 0);
-        b.bevelBox(0, 1.6, 0, 0.7, 3.4, 0.06, 0.02, { taperX: 0.2 });
-        b.pop().pop();
+      for (let k = 0; k < 9; k++) {
+        const a = (k / 9) * Math.PI * 2 + (k % 2) * 0.2;
+        const ca = Math.cos(a), sa = Math.sin(a);
+        const pts = [[0, 0], [1.4, 0.45], [2.6, 0.2], [3.5, -0.6]];
+        const wdt = [0.15, 0.55, 0.45, 0.05];
+        for (let s = 0; s < 3; s++) {
+          const [r0, h0] = pts[s], [r1, h1] = pts[s + 1];
+          const w0 = wdt[s], w1 = wdt[s + 1];
+          const P = (r, h, w) => [x + ca * r - sa * w, y + h, sa * r + ca * w];
+          const q = [P(r0, h0, -w0), P(r1, h1, -w1), P(r1, h1, w1), P(r0, h0, w0)];
+          b.quad(q[0], q[1], q[2], q[3], [0, 1, 0]);
+          b.quad(q[3], q[2], q[1], q[0], [0, 1, 0]);
+        }
       }
-      b.paint(hex('#5a4228'), MAT.WOOD).sphere(x, y - 0.1, 0, 0.45, 0.35, 0.45, 6, 4);
+      b.paint(hex('#5a4228'), MAT.WOOD).sphere(x, y - 0.1, 0, 0.42, 0.32, 0.42, 6, 3);
     },
   },
   tree: {
@@ -57,8 +67,8 @@ const DEFS = {
       b.paint(hex('#5a3e28'), MAT.WOOD).cylinder(0, 0, 0, 0.32, 0.2, 3.4, 7);
       b.limb(0, 2.6, 0, 0.9, 3.8, 0.3, 0.14, 0.09, 6).limb(0, 2.9, 0, -0.8, 4.0, -0.4, 0.13, 0.08, 6);
       b.paint(hex('#2f7d34'), MAT.FOLIAGE);
-      b.sphere(0, 4.6, 0, 2.3, 1.7, 2.3, 9, 6).sphere(1.2, 4.1, 0.6, 1.5, 1.2, 1.5, 8, 5).sphere(-1.1, 4.3, -0.7, 1.6, 1.3, 1.6, 8, 5);
-      b.paint(hex('#3e9a3e'), MAT.FOLIAGE).sphere(0.2, 5.6, -0.2, 1.4, 1.0, 1.4, 8, 5);
+      b.sphere(0, 4.6, 0, 2.3, 1.7, 2.3, 8, 5).sphere(1.2, 4.1, 0.6, 1.5, 1.2, 1.5, 6, 4).sphere(-1.1, 4.3, -0.7, 1.6, 1.3, 1.6, 6, 4);
+      b.paint(hex('#3e9a3e'), MAT.FOLIAGE).sphere(0.2, 5.6, -0.2, 1.4, 1.0, 1.4, 6, 4);
     },
   },
   bench: {
@@ -263,7 +273,7 @@ export class PropSystem {
       bt.dirty = false;
       const out = bt.mesh.idata;
       let n = 0;
-      const lim = Math.min(drawDist + 30, RANGE[bt.type] ?? 260);
+      const lim = Math.min(drawDist + 30, (RANGE[bt.type] ?? 260) * Math.min(1, Math.max(0.6, drawDist / 900)));
       for (const it of bt.items) {
         if (!it.alive) continue;
         if (Math.abs(it.x - camX) > lim || Math.abs(it.z - camZ) > lim) continue;

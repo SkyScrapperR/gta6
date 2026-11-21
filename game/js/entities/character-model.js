@@ -350,7 +350,8 @@ export class Animator {
       mix(BONE.UARM_L, 0, -0.95 + st * 0.2); mix(BONE.UARM_R, 0, -0.95 - st * 0.2);
       mix(BONE.UARM_L, 2, -0.15); mix(BONE.UARM_R, 2, 0.15);
       mix(BONE.FARM_L, 0, -0.55); mix(BONE.FARM_R, 0, -0.55);
-      mix(BONE.CHEST, 0, -0.08); mix(BONE.CHEST, 1, 0);
+      mix(BONE.CHEST, 0, -0.3); mix(BONE.CHEST, 1, 0);
+      mix(BONE.HEAD, 0, 0.25);
       hipY = lerp(hipY, -0.42, seat);
       hipZ = lerp(hipZ, -0.05, seat);
     }

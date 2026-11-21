@@ -377,7 +377,7 @@ export class City {
       for (const lid of n.links) {
         const m = this.roads.nodes[lid];
         const d = [Math.sign(n.x - m.x), Math.sign(n.z - m.z)];
-        const left = [-d[1], d[0]];
+        const left = [d[1], -d[0]];
         const px = n.x - d[0] * (ROAD_HALF + 1.2) + left[0] * (ROAD_HALF + 0.9);
         const pz = n.z - d[1] * (ROAD_HALF + 1.2) + left[1] * (ROAD_HALF + 0.9);
         const yaw = Math.atan2(-left[0], -left[1]);

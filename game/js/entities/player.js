@@ -5,6 +5,7 @@
 import { clamp, damp, dampAngle, wrapAngle } from '../core/math.js';
 import { buildCharacter, Animator, LOOKS } from './character-model.js';
 import { m4compose } from '../core/math.js';
+import { CarEntry } from './car-entry.js';
 
 export class Player {
   constructor(gl, city) {
@@ -181,7 +182,7 @@ export class Player {
   queue(renderer, night) {
     if (!this.visible) return;
     renderer.draw(this.mesh, {
-      model: this.matrix(),
+      model: this.vehicle ? CarEntry.seatMatrix(this.vehicle) : this.matrix(),
       bones: this.anim.bones,
       rim: [0.35, 0.95, 0.9, 0.25 + night * 0.9],
     });
