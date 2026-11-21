@@ -320,7 +320,7 @@ class StoryScripts {
     w.missionNoCops = true;
     this.tick = () => {
       const down = guards.filter((g) => g.dead).length;
-      const t = `Defeat the guards ${down}/6 · Destroy the Bison ${truck.wrecked ? '✔' : '✘'}`;
+      const t = `Defeat the guards ${down}/6 · Destroy the Bison ${truck.wrecked ? '[x]' : '[ ]'}`;
       if (t !== this.objText) this.objective(t, 'Shoot the truck until it explodes');
       if (guards.some((g) => g.brain.state !== 'guard')) for (const g of guards) g.brain.alert();
     };

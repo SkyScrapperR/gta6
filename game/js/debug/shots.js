@@ -5,6 +5,7 @@
 import { POINTS } from '../world/layout.js';
 import { GangBrain } from '../ai/combat-ai.js';
 import { twoShot, openSide } from '../story/cutscene-camera.js';
+import { MISSIONS } from '../story/missions.js';
 
 const wait = (app, s) => new Promise((res) => {
   const end = app.game.time + s;
@@ -106,8 +107,17 @@ export async function runShot(app, name) {
       e.weapon = 'pistol';
       e.brain = new GangBrain(g, { weapon: 'pistol', accuracy: 0.0, alerted: true });
     }
+    // Two guards already down.
+    for (const q of g.peds.list.filter((p) => p.kind === 'gang').slice(4)) q.damage(5000, px, pz, 'player');
     g.player.god = true;
-    g.missions.objective('Defeat the guards 2/6 · Destroy the Bison ✘', 'Shoot the truck until it explodes');
+    // Mid-mission Low Tide state; the tracker counter is computed from the guards actually down.
+    g.missions.active = MISSIONS[4];
+    g.missions.done = ['Grab the Wasp SMG from the workbench', 'Go to Orchid Freight'];
+    g.missions.tick = () => {
+      const down = g.peds.list.filter((q) => q.kind === 'gang' && q.dead).length + 6 - g.peds.list.filter((q) => q.kind === 'gang').length;
+      const t = `Defeat the guards ${down}/6 · Destroy the Bison ${truck.wrecked ? '[x]' : '[ ]'}`;
+      if (t !== g.missions.objText) { g.missions.objText = t; g.missions.objSub = 'Shoot the truck until it explodes'; }
+    };
     g.autoFire = true;
     // Pulled-back over-the-shoulder framing: Kai small on the left third, the yard ahead.
     const fx = Math.sin(face), fz = Math.cos(face), rx = -fz, rz = fx;

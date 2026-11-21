@@ -179,6 +179,7 @@ export class HUD {
     const stars = w.wanted.stars;
     const flash = w.wanted.flash && Math.sin(w.time * 9) < 0;
     for (let i = 0; i < 5; i++) star(g, px + PW - 22 - (4 - i) * 30, py + 100, 11, i < stars && !flash, '#ffd23a');
+    this.drawTracker(g, px, py + 128, PW);
     g.restore();
 
     // ------------------------------------------------ minimap
@@ -279,6 +280,47 @@ export class HUD {
     }
   }
 
+  /**
+   * Mission tracker under the status panel: mission number and name, finished objectives ticked, the
+   * live objective with its counter, and checklist items "[ ]" / "[x]" drawn as boxes.
+   */
+  drawTracker(g, x, y, w) {
+    const t = this.world.missions?.tracker();
+    if (!t) return;
+    const lines = [...t.done.map((d) => ({ text: d, ok: true })), ...t.current.split(' · ').map((p) => ({ text: p, ok: /\[x\]/.test(p) }))];
+    const h = 34 + lines.length * 22 + (t.sub ? 18 : 0);
+    panel(g, x, y, w, h);
+    g.fillStyle = '#ff3fa4';
+    g.fillRect(x, y, 4, h);
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    g.font = `900 14px ${FONT}`;
+    outlined(g, t.title, x + 14, y + 17, '#ffd23a', '#000', 3);
+    g.font = `700 14px "Segoe UI", system-ui, sans-serif`;
+    lines.forEach((l, i) => {
+      const ly = y + 40 + i * 22;
+      g.strokeStyle = l.ok ? '#4dff9a' : '#f2f4ff';
+      g.lineWidth = 2;
+      g.strokeRect(x + 14, ly - 6, 12, 12);
+      if (l.ok) {
+        g.beginPath();
+        g.moveTo(x + 16, ly);
+        g.lineTo(x + 19.5, ly + 4);
+        g.lineTo(x + 25, ly - 5);
+        g.stroke();
+      }
+      let text = l.text.replace(/ *\[[ x]\]/g, '');
+      while (g.measureText(text).width > w - 46 && text.length > 4) text = `${text.slice(0, -2)}…`;
+      outlined(g, text, x + 34, ly, l.ok ? '#9aa3b8' : '#f2f4ff', '#000', 3);
+    });
+    if (t.sub) {
+      g.font = `600 12px "Segoe UI", system-ui, sans-serif`;
+      let sub = t.sub;
+      while (g.measureText(sub).width > w - 28 && sub.length > 4) sub = `${sub.slice(0, -2)}…`;
+      outlined(g, sub, x + 14, y + h - 14, '#2ff3e0', '#000', 3);
+    }
+  }
+
   /** Letterbox bars for cutscenes; subtitles and portrait cards come from the slots. */
   drawCinematic(g, W, H, s, dt) {
     const k = Math.min(1, (this.cineT = (this.cineT ?? 0) + dt * 2));
@@ -359,7 +401,7 @@ export class HUD {
     g.textBaseline = 'middle';
     // Objective (bottom centre, above subtitles).
     const obj = n.active.objective;
-    if (obj && !cine) {
+    if (obj && !cine && !this.world.missions?.tracker()) {
       g.globalAlpha = n.alpha('objective');
       g.textAlign = 'center';
       g.font = `800 ${24 * s}px ${FONT}`;

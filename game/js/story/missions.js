@@ -88,9 +88,20 @@ export class MissionSystem {
     this.watchers.push(fn);
   }
 
+  /** Set the current objective. A new objective (not just a counter update) ticks off the previous one. */
   objective(text, sub = null) {
+    const stem = (t) => (t ?? '').replace(/[\d/%]+|\[[ x]\]|█|░/g, '').trim();
+    if (this.objText && stem(this.objText) !== stem(text)) this.done.push(this.objText.replace(/ *\[[ x]\]/g, ''));
     this.objText = text;
+    this.objSub = sub;
     this.w.notes.push({ slot: 'objective', text, sub, duration: Infinity, key: 'obj', priority: 3 });
+  }
+
+  /** What the HUD tracker shows: mission title, finished objectives (ticked) and the live one. */
+  tracker() {
+    if (!this.active || !this.objText) return null;
+    const n = MISSIONS.indexOf(this.active);
+    return { title: `${n + 1}/6  ${this.active.title.toUpperCase()}`, done: this.done.slice(-3), current: this.objText, sub: this.objSub };
   }
 
   help(text, duration = 6) {
@@ -139,6 +150,8 @@ export class MissionSystem {
     const def = MISSIONS[n];
     if (!def || this.active) return;
     this.active = def;
+    this.done = [];
+    this.objText = null;
     this.armed = false;
     this.w.notes.push({ slot: 'banner', text: def.title.toUpperCase(), color: '#ffd23a', sub: `Mission ${n + 1} of 6`, priority: 4, duration: 2.6 });
     this.watch(() => (this.w.player.dead > 0 ? 'You flatlined.' : this.w.player.cuffed > 0 ? 'You got cuffed.' : null));
@@ -206,6 +219,8 @@ export class MissionSystem {
     this.targetEnt = null;
     this.counter = null;
     this.active = null;
+    this.objText = null;
+    this.done = [];
     this.failReason = null;
     this.w.missionNoCops = false;
     this.w.notes.clear('objective', 'obj');
