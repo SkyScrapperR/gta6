@@ -171,7 +171,7 @@ async (page) => {
     const FROM = globalThis.PLAYTEST_FROM ?? 1;
     if (FROM > 1) {
       // Debug shortcut: jump to a later mission (never used for the full run).
-      await ev((n) => { const g = window.__app.game; g.missions.abort(); g.missions.passed = n - 1; g.missions.safehouseUnlocked = true; g.arsenal.give('pistol', 120); const f = g.city.anchors.garage.front; g.player.place(f[0] + 6, f[1]); }, FROM);
+      await ev((n) => { const g = window.__app.game; g.missions.abort(); g.missions.passed = n - 1; g.missions.safehouseUnlocked = true; g.arsenal.give('pistol', 120); if (n > 5) g.arsenal.give('smg', 120); const f = g.city.anchors.garage.front; g.player.place(f[0] + 6, f[1]); }, FROM);
     }
     // ---------------------------------------------------------------- walk, sprint, jump with real keys
     let s0 = await S();
@@ -362,10 +362,11 @@ async (page) => {
     await page.keyboard.press('KeyF');
     await sleep(1500);
     const gs = await A('guns');
-    const ammo0 = await ev(() => window.__app.game.arsenal.owned.pistol.ammo);
+    const cash0 = (await S()).money;
     await tp(gs.counter[0] - 4, gs.counter[1]);
     await walkTo(gs.counter[0], gs.counter[1], { r: 0.8 });
-    await until(() => ev((a0) => window.__app.game.arsenal.owned.pistol.ammo > a0, ammo0), 5000, 'bought ammo at Bang Bang Arms');
+    await until((s) => s.money < cash0, 5000, 'bought gear at Bang Bang Arms');
+    step('ok: Kilat Respray and Bang Bang Arms');
     // ---------------------------------------------------------------- Kai vs cop distinctness
     await page.goto(`${BASE}?q=low&shot=kaicop`);
     await page.bringToFront();
@@ -377,13 +378,14 @@ async (page) => {
       const x = g2.getContext('2d');
       x.drawImage(c, 0, 0);
       const avg = (x0, x1) => {
-        const d = x.getImageData(Math.floor(c.width * x0), Math.floor(c.height * 0.45), Math.floor(c.width * (x1 - x0)), Math.floor(c.height * 0.15)).data;
+        const d = x.getImageData(Math.floor(c.width * x0), Math.floor(c.height * 0.3), Math.floor(c.width * (x1 - x0)), Math.floor(c.height * 0.12)).data;
         let r = 0, gg = 0, b = 0;
         for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; }
         const n = d.length / 4;
         return [r / n, gg / n, b / n];
       };
-      const kai = avg(0.36, 0.46), cop = avg(0.54, 0.64);
+      // Kai stands on the right of the frame, the officer on the left.
+      const kai = avg(0.63, 0.72), cop = avg(0.27, 0.36);
       return { kai, cop, dist: Math.hypot(kai[0] - cop[0], kai[1] - cop[1], kai[2] - cop[2]) };
     });
     expect(diff.dist > 40, `Kai and the cop are visually distinct (colour distance ${diff.dist.toFixed(1)})`);

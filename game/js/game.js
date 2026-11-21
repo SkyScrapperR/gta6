@@ -373,7 +373,7 @@ export class Game {
     // Death and arrest.
     if (p.dead > 0 && !this.failState) this.onPlayerDeath();
     if (this.failState) {
-      this.failState.t += dt;
+      this.failState.t += dt / Math.max(0.1, this.timeScale);
       if (this.failState.t > 4.5) this.respawn(this.failState.kind);
     }
     this.missions?.update(dt);
