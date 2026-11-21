@@ -48,10 +48,26 @@ async (page) => {
   /** Walk to a point with WASD after facing it. */
   const walkTo = async (tx, tz, { sprint = false, r = 1.2, ms = 30000 } = {}) => {
     const end = Date.now() + ms;
+    let last = null, still = 0, side = 'KeyD';
     while (Date.now() < end) {
       const s = await S();
       const d = Math.hypot(tx - s.x, tz - s.z);
       if (d < r) break;
+      // Wedged against a corner or a post: step sideways for a moment, alternating sides.
+      still = last && Math.hypot(s.x - last[0], s.z - last[1]) < 0.08 ? still + 1 : 0;
+      last = [s.x, s.z];
+      if (still > 5) {
+        await hold('KeyW', false);
+        await hold('KeyS', true);
+        await hold(side, true);
+        await sleep(450);
+        await hold('KeyS', false);
+        await sleep(350);
+        await hold(side, false);
+        side = side === 'KeyD' ? 'KeyA' : 'KeyD';
+        still = 0;
+        continue;
+      }
       await look(Math.atan2(tx - s.x, tz - s.z));
       await hold('KeyW', true);
       await hold('ShiftLeft', sprint && d > 6);
@@ -135,7 +151,11 @@ async (page) => {
       const t = await ev((expr) => {
         const g = window.__app.game, p = g.player;
         const list = g.peds.list.filter((q) => (expr === 'gang' ? q.kind === 'gang' : q.meshKey === expr) && !q.dead && !q.hidden);
-        const seen = (q) => g.city.col.lineClear(p.x, p.y + 1.5, p.z, q.x, q.y + 1.2, q.z);
+        // Visible means a bullet would get through: the same obstacle filter the weapons use.
+        const seen = (q) => {
+          const dx = q.x - p.x, dy = q.y + 1.2 - (p.y + 1.5), dz = q.z - p.z, l = Math.hypot(dx, dy, dz) || 1;
+          return !g.city.col.raycast(p.x, p.y + 1.5, p.z, dx / l, dy / l, dz / l, l - 0.6, (it) => !(it.type === 'circle' && it.r < 0.25));
+        };
         list.sort((a, b) => (seen(b) - seen(a)) || Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z));
         const q = list[0];
         if (!q) return null;
@@ -152,7 +172,8 @@ async (page) => {
             const x = tx + Math.cos(a) * r, z = tz + Math.sin(a) * r;
             const res = col.resolveCircle(x, z, 0.4, 0.15, 1.8);
             if (res.hit) continue;
-            if (col.lineClear(x, 1.6, z, tx, 1.3, tz)) { g.player.place(x, z, Math.atan2(tx - x, tz - z)); g.camCtl.face(Math.atan2(tx - x, tz - z)); return; }
+            const dx = tx - x, dz = tz - z, l = Math.hypot(dx, -0.3, dz);
+            if (!col.raycast(x, 1.6, z, dx / l, -0.3 / l, dz / l, l - 0.6, (it) => !(it.type === 'circle' && it.r < 0.25))) { g.player.place(x, z, Math.atan2(tx - x, tz - z)); g.camCtl.face(Math.atan2(tx - x, tz - z)); return; }
           }
         }, [t.x, t.z]);
         hidden = 0;

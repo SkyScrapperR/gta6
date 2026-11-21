@@ -262,27 +262,105 @@ export class MeshBuilder {
     return this.pop();
   }
 
-  /** Car wheel lying on the X axis at (cx, cy, cz): tire, rim, hub and spokes. */
+  /**
+   * Car wheel lying on the X axis at (cx, cy, cz): a tread with rounded shoulders, slightly lighter
+   * sidewalls, a recessed rim with a lip, spokes, a hub cap and a brake disc behind the spokes.
+   */
   wheel(cx, cy, cz, radius, width, tireColor, rimColor, spokes = 5) {
     const saved = [this.color, this.material, this.emissive];
     this.push().transform(cx, cy, cz, 0, 0, Math.PI / 2);
+    const sh = Math.min(0.04, width * 0.2), rs = radius - sh * 0.9;
     this.paint(tireColor, MAT.PLAIN);
-    this.cylinder(0, -width / 2, 0, radius, radius, width, 14, { top: true, bottom: true });
-    this.paint(rimColor, MAT.METAL);
+    this.cylinder(0, -width / 2 + sh, 0, radius, radius, width - 2 * sh, 18, { top: false });
+    this.cylinder(0, width / 2 - sh, 0, radius, rs, sh, 18, { top: false });
+    this.cylinder(0, -width / 2, 0, rs, radius, sh, 18, { top: false });
+    const side = [tireColor[0] * 1.8 + 0.02, tireColor[1] * 1.8 + 0.02, tireColor[2] * 1.8 + 0.025];
     const rr = radius * 0.64;
-    this.cylinder(0, width / 2 - 0.005, 0, rr, rr * 0.92, 0.02, 12, { top: true });
-    this.cylinder(0, -width / 2 - 0.015, 0, rr * 0.92, rr, 0.02, 12, { top: false, bottom: true });
-    for (const side of [1, -1]) {
-      for (let s = 0; s < spokes; s++) {
-        const a = (s / spokes) * Math.PI * 2;
-        this.push().transform(0, side * (width / 2 + 0.02), 0, a, 0, 0);
-        this.box(0, 0, rr * 0.5, 0.05, 0.025, rr * 0.9);
+    for (const s of [1, -1]) {
+      // Sidewall ring and the rim set slightly into it.
+      this.paint(side, MAT.PLAIN);
+      this.push().transform(0, s * width / 2, 0, 0, s > 0 ? 0 : Math.PI, 0);
+      this.cylinder(0, -0.004, 0, rs, rr * 1.06, 0.008, 18, { top: true });
+      this.paint(rimColor, MAT.METAL);
+      this.cylinder(0, -0.012, 0, rr * 1.06, rr, 0.016, 16, { top: true });
+      this.paint([rimColor[0] * 0.35, rimColor[1] * 0.35, rimColor[2] * 0.35], MAT.METAL);
+      this.cylinder(0, -0.05, 0, rr * 0.98, rr * 0.98, 0.04, 16, { top: true });
+      this.paint([0.32, 0.31, 0.3], MAT.METAL).cylinder(0, -0.04, 0, rr * 0.7, rr * 0.7, 0.012, 14, { top: true });
+      this.paint(rimColor, MAT.METAL);
+      for (let k = 0; k < spokes; k++) {
+        this.push().transform(0, -0.006, 0, (k / spokes) * Math.PI * 2, 0, 0);
+        this.box(0, 0, rr * 0.52, 0.05, 0.026, rr * 0.88);
         this.pop();
       }
-      this.cylinder(0, side > 0 ? width / 2 + 0.01 : -width / 2 - 0.05, 0, rr * 0.22, rr * 0.18, 0.04, 8);
+      this.cylinder(0, -0.01, 0, rr * 0.24, rr * 0.18, 0.03, 10);
+      this.pop();
     }
     this.pop();
     [this.color, this.material, this.emissive] = saved;
+    return this;
+  }
+
+  /**
+   * Side-profile solid (car bodies): `top` and `bottom` are chains of [z, y, halfWidth] points from front
+   * to rear (z decreasing), so the bottom can carry wheel-arch cut-outs. The flanks are inset by `bevel`
+   * and joined to the outer band by a chamfer, so every edge catches a highlight; the band is smooth.
+   */
+  loft(top, bottom, bevel = 0.04) {
+    const pts = [...top, ...[...bottom].reverse()];
+    const n = pts.length;
+    // Outward profile normal per point (the average of its two edge normals), from the loop's winding.
+    let area = 0;
+    for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n]; area += p[0] * q[1] - q[0] * p[1]; }
+    const wind = area > 0 ? 1 : -1;
+    const edgeN = pts.map((p, i) => {
+      const q = pts[(i + 1) % n];
+      const nz = (q[1] - p[1]) * wind, ny = -(q[0] - p[0]) * wind;
+      const l = Math.hypot(nz, ny) || 1;
+      return [nz / l, ny / l];
+    });
+    const pn = pts.map((p, i) => {
+      const a = edgeN[(i + n - 1) % n], c = edgeN[i];
+      const z = a[0] + c[0], y = a[1] + c[1], l = Math.hypot(z, y) || 1;
+      return [z / l, y / l];
+    });
+    const ins = pts.map(([z, y, w], i) => [z - pn[i][0] * bevel, y - pn[i][1] * bevel, w]);
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, a = pts[i], c = pts[j];
+      // Band across the width.
+      const v = [
+        this.vertex(-(a[2] - bevel), a[1], a[0], 0, pn[i][1], pn[i][0]),
+        this.vertex(a[2] - bevel, a[1], a[0], 0, pn[i][1], pn[i][0]),
+        this.vertex(c[2] - bevel, c[1], c[0], 0, pn[j][1], pn[j][0]),
+        this.vertex(-(c[2] - bevel), c[1], c[0], 0, pn[j][1], pn[j][0]),
+      ];
+      this.facingTri(v[0], v[1], v[2]);
+      this.facingTri(v[0], v[2], v[3]);
+      for (const s of [-1, 1]) {
+        // Chamfer between the band edge and the inset flank.
+        const ch = (p, q) => { const l = Math.hypot(0.7, q[1], q[0]); return [s * 0.7 / l, q[1] / l, q[0] / l]; };
+        const na = ch(a, pn[i]), nc = ch(c, pn[j]);
+        const u = [
+          this.vertex(s * (a[2] - bevel), a[1], a[0], ...na),
+          this.vertex(s * a[2], ins[i][1], ins[i][0], ...na),
+          this.vertex(s * c[2], ins[j][1], ins[j][0], ...nc),
+          this.vertex(s * (c[2] - bevel), c[1], c[0], ...nc),
+        ];
+        this.facingTri(u[0], u[1], u[2]);
+        this.facingTri(u[0], u[2], u[3]);
+      }
+    }
+    // Flanks: triangulate between the inset top and bottom chains, merging them by z.
+    const nt = top.length;
+    const it = ins.slice(0, nt), ib = ins.slice(nt).reverse();
+    for (const s of [-1, 1]) {
+      const V = (p) => this.vertex(s * p[2], p[1], p[0], s, 0, 0);
+      let i = 0, j = 0;
+      while (i < it.length - 1 || j < ib.length - 1) {
+        const advanceTop = j >= ib.length - 1 || (i < it.length - 1 && it[i + 1][0] >= ib[j + 1][0]);
+        if (advanceTop) { this.facingTri(V(it[i]), V(it[i + 1]), V(ib[j])); i++; }
+        else { this.facingTri(V(it[i]), V(ib[j + 1]), V(ib[j])); j++; }
+      }
+    }
     return this;
   }
 
