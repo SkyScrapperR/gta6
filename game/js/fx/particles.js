@@ -243,11 +243,29 @@ export class Particles {
   }
 
   /** Falling rain streaks around the camera. */
-  rain(cx, cy, cz, amount, dt) {
+  rain(cx, cy, cz, amount, dt, groundAt = null) {
     const n = Math.floor(amount * 900 * dt);
     for (let k = 0; k < n; k++) {
       const x = cx + (Math.random() - 0.5) * 50, z = cz + (Math.random() - 0.5) * 50;
       this.spawn({ x, y: cy + 8 + Math.random() * 10, z, vx: 1.5, vy: -22, vz: 0.6, life: 0.9, size: 0.012, stretch: 0.45, col: [0.55, 0.6, 0.7, 0.32], kind: PK.STREAK });
     }
+    // Splashes where drops hit the ground near the camera: a tiny crown of droplets and a ring.
+    if (!groundAt) return;
+    const m = Math.floor(amount * 220 * dt + Math.random());
+    for (let k = 0; k < m; k++) {
+      const x = cx + (Math.random() - 0.5) * 30, z = cz + (Math.random() - 0.5) * 30;
+      const y = groundAt(x, z) + 0.02;
+      this.spawn({ x, y, z, life: 0.22, size: 0.03, size1: 0.16, col: [0.7, 0.75, 0.82, 0.35], col1: [0.7, 0.75, 0.82, 0] });
+      for (let s = 0; s < 3; s++) {
+        const a = Math.random() * 6.28;
+        this.spawn({ x, y, z, vx: Math.cos(a) * 0.7, vy: 1.4 + Math.random(), vz: Math.sin(a) * 0.7, life: 0.25, size: 0.012, stretch: 0.05, col: [0.7, 0.75, 0.85, 0.5], kind: PK.STREAK, grav: 9 });
+      }
+    }
+  }
+
+  /** What fast wheels throw up: road dust when dry, a fine spray of water in the rain. */
+  wheelWake(x, y, z, vx, vz, wet) {
+    if (wet) this.spawn({ x, y: y + 0.15, z, vx: vx * 0.3 + (Math.random() - 0.5), vy: 0.8 + Math.random() * 0.6, vz: vz * 0.3 + (Math.random() - 0.5), life: 0.7, size: 0.25, size1: 1.1, col: [0.75, 0.78, 0.82, 0.22], col1: [0.75, 0.78, 0.82, 0], kind: PK.SMOKE, drag: 2.5 });
+    else this.spawn({ x, y: y + 0.1, z, vx: vx * 0.25 + (Math.random() - 0.5) * 0.6, vy: 0.35 + Math.random() * 0.4, vz: vz * 0.25 + (Math.random() - 0.5) * 0.6, life: 1.1, size: 0.3, size1: 1.3, col: [0.62, 0.56, 0.48, 0.18], col1: [0.62, 0.56, 0.48, 0], kind: PK.SMOKE, drag: 2.0 });
   }
 }

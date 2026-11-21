@@ -305,6 +305,12 @@ export class Game {
         if (v.skidAcc > 0.03) v.skidAcc = 0;
         v.screech = true;
       } else v.screech = false;
+      // Fast cars kick up road dust behind the rear wheels (spray when the road is wet).
+      const sp = Math.abs(v.speed);
+      if (sp > 12 && !v.def.scooter && Math.random() < dt * (sp - 10) * 0.9) {
+        const r = v.right, s = Math.random() < 0.5 ? 1 : -1;
+        pt.wheelWake(v.x - f[0] * (v.def.len / 2 - 0.4) + r[0] * s * v.def.wid * 0.4, v.y, v.z - f[1] * (v.def.len / 2 - 0.4) + r[1] * s * v.def.wid * 0.4, -f[0] * sp, -f[1] * sp, this.env.rain > 0.3);
+      }
     }
   }
 
@@ -422,7 +428,7 @@ export class Game {
       this.pickups.update(dt);
     }
     this.vehicleFx(dt);
-    if (this.env.rain > 0.05) this.fx.particles.rain(this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], this.env.rain, dt);
+    if (this.env.rain > 0.05) this.fx.particles.rain(this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], this.env.rain, dt, (x, z) => this.city.groundAt(x, z));
     this.fx.particles.update(dt);
     this.fx.lights.update(dt);
     if (this.cinematic?.cam) this.camCtl.updateShot(dt, this.cinematic.cam.pos, this.cinematic.cam.target, this.cinematic.cam.fov ?? 45, this.cinematic.cam.smooth ?? 0);
