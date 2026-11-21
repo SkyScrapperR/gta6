@@ -5,8 +5,10 @@
 
 import { m4compose, m4mul, lerp, clamp } from '../core/math.js';
 
-export const BONE = { HIPS: 0, CHEST: 1, HEAD: 2, UARM_L: 3, FARM_L: 4, UARM_R: 5, FARM_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10 };
-const PARENT = [-1, 0, 1, 1, 3, 1, 5, 0, 7, 0, 9];
+// JAW and LIDS are face bones riding on the head: the jaw opens the mouth while talking, the lids blink.
+export const BONE = { HIPS: 0, CHEST: 1, HEAD: 2, UARM_L: 3, FARM_L: 4, UARM_R: 5, FARM_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, JAW: 11, LIDS: 12 };
+const PARENT = [-1, 0, 1, 1, 3, 1, 5, 0, 7, 0, 9, 2, 2];
+const NB = PARENT.length;
 
 /** Joint offsets from the parent joint (metres, before scaling by height). */
 const OFFSET = [
@@ -21,6 +23,8 @@ const OFFSET = [
   [0, -0.43, 0], // left knee
   [-0.1, -0.04, 0], // right hip joint
   [0, -0.43, 0], // right knee
+  [0, 0, 0], // jaw (moves the mouth parts within the head)
+  [0, 0, 0], // eyelids
 ];
 
 
@@ -33,9 +37,12 @@ export class Animator {
   constructor(height = 1) {
     this.height = height;
     this.bones = new Float32Array(16 * 16);
-    this.world = Array.from({ length: 11 }, () => new Float32Array(16));
-    this.rot = Array.from({ length: 11 }, () => [0, 0, 0]);
+    this.world = Array.from({ length: NB }, () => new Float32Array(16));
+    this.rot = Array.from({ length: NB }, () => [0, 0, 0]);
     this.root = [0, 0, 0];
+    this.jaw = 0; // 0 closed .. 1 open
+    this.lid = 0; // 0 open .. 1 shut
+    this.blinkSeed = Math.random() * 10;
   }
 
   pose(s) {
@@ -172,16 +179,24 @@ export class Animator {
     }
     this.root = [0, hipY, hipZ];
     this.rootPitch = rootPitch;
+    // Face: the jaw flaps with syllable-like rhythm while talking; a blink every few seconds (eyes shut
+    // when dead).
+    const talk = s.talk ?? 0;
+    this.jaw = talk > 0.05 ? talk * clamp(0.45 + 0.55 * Math.sin(t * 13.0) * Math.sin(t * 4.7 + 1.3), 0, 1) : 0;
+    const cyc = (t * 0.27 + this.blinkSeed) % 1;
+    this.lid = dead > 0.5 ? 1 : cyc < 0.035 ? Math.sin((cyc / 0.035) * Math.PI) : 0;
     this.compose();
   }
 
   compose() {
     const h = this.height;
-    for (let i = 0; i < 11; i++) {
+    for (let i = 0; i < NB; i++) {
       const o = OFFSET[i];
       const r = this.rot[i];
       let local;
       if (i === 0) local = m4compose(o[0] * h + this.root[0], o[1] * h + this.root[1], o[2] * h + this.root[2], r[1], r[0] + (this.rootPitch ?? 0), r[2], h);
+      else if (i === BONE.JAW) local = m4compose(0, -this.jaw * 0.016, -0.035 * (1 - Math.min(1, this.jaw * 5)), 0, 0, 0);
+      else if (i === BONE.LIDS) local = m4compose(0, 0, -0.05 * (1 - this.lid), 0, 0, 0);
       else local = m4compose(o[0], o[1], o[2], r[1], r[0], r[2]);
       if (PARENT[i] < 0) this.world[i] = local;
       else m4mul(this.world[PARENT[i]], local, this.world[i]);

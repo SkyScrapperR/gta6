@@ -60,6 +60,15 @@ function buildHead(b, look, skin, hairC) {
   }
   b.paint(hex(look.female ? '#b04a5c' : '#80423a'), MAT.SKIN).bevelBox(0, hy - 0.058, 0.103, 0.04, 0.01, 0.012, 0.004); // mouth
   b.paint(skin.map((c) => c * 0.88), MAT.SKIN).bevelBox(0, hy - 0.047, 0.108, 0.022, 0.004, 0.006, 0.002); // upper lip shade
+  // Face bones: the jaw carries the dark mouth interior and lower lip (tucked into the head when
+  // closed); the lids are skin caps over the eyes that slide forward to blink.
+  b.setBone(BONE.JAW);
+  b.paint([0.16, 0.05, 0.05], MAT.SKIN).sphere(0, hy - 0.064, 0.098, 0.019, 0.012, 0.01, 8, 5);
+  b.paint(hex(look.female ? '#b04a5c' : '#80423a'), MAT.SKIN).bevelBox(0, hy - 0.074, 0.1, 0.036, 0.008, 0.012, 0.004);
+  b.setBone(BONE.LIDS);
+  b.paint(skin.map((c) => c * 0.95), MAT.SKIN);
+  for (const sx of [-1, 1]) b.sphere(sx * 0.042, hy + 0.03, 0.1, 0.033, 0.027, 0.018, 10, 6);
+  b.setBone(BONE.HEAD);
   if (look.glasses) {
     b.paint(hex('#151515'), MAT.METAL);
     for (const sx of [-1, 1]) {
@@ -128,7 +137,7 @@ export function buildCharacter(gl, look) {
   const fem = !!look.female;
   const layered = look.jacket || look.suit || look.hoodie;
   const longSleeve = layered || look.uniform;
-  const S = 10;
+  const S = 14;
 
   // ---------------- hips: pelvis, slim belt, optional skirt
   b.setBone(BONE.HIPS);
@@ -200,8 +209,17 @@ export function buildCharacter(gl, look) {
     b.setBone(fb);
     b.paint(longSleeve ? top : skin, longSleeve ? MAT.CLOTH : MAT.SKIN).limb(0, 0, 0, 0, -0.24, 0, 0.043 * w, 0.034 * w, S);
     if (layered) b.paint(inner, MAT.CLOTH).cylinder(0, -0.25, 0, 0.036, 0.036, 0.02, S);
-    // Mitten hand: palm block plus a thumb.
+    // Cloth gathers in soft creases at the inside of the elbow.
+    if (longSleeve) {
+      b.paint(top.map((c) => c * 0.78), MAT.CLOTH);
+      for (const [y, r] of [[-0.015, 0.045], [-0.05, 0.043]]) b.cylinder(0, y, 0.004, r * w, r * w, 0.008, S);
+    }
+    // Mitten hand: palm block, knuckle ridge, finger grooves and a thumb.
     b.paint(skin, MAT.SKIN).bevelBox(0, -0.3, 0.004, 0.066, 0.095, 0.034, 0.015);
+    b.bevelBox(0, -0.318, 0.004, 0.07, 0.02, 0.038, 0.008);
+    b.paint(skin.map((c) => c * 0.7), MAT.SKIN);
+    for (const gx of [-0.016, 0, 0.016]) b.box(gx, -0.333, 0.004, 0.003, 0.032, 0.036);
+    b.paint(skin, MAT.SKIN);
     b.push().transform(sx * 0.032, -0.275, 0.018, 0, 0, sx * 0.45).bevelBox(0, 0, 0, 0.022, 0.048, 0.022, 0.009).pop();
   }
   // ---------------- legs: tapered, knee definition, shoes with soles
@@ -212,6 +230,11 @@ export function buildCharacter(gl, look) {
     b.sphere(0, -0.43, 0.006, 0.056 * w, 0.054, 0.058 * w, 9, 5);
     b.setBone(sb);
     b.paint(legC, legM).limb(0, 0, 0, 0, -0.41, 0, 0.054 * w, 0.042 * w, S);
+    if (!look.skirt) {
+      // Trouser creases behind the knee and where the hem breaks over the shoe.
+      b.paint(bottoms.map((c) => c * 0.8), MAT.CLOTH);
+      b.cylinder(0, -0.03, -0.004, 0.056 * w, 0.056 * w, 0.008, S).cylinder(0, -0.36, 0, 0.047 * w, 0.047 * w, 0.007, S);
+    }
     if (!look.skirt) b.paint(bottoms.map((c) => c * 0.85), MAT.CLOTH).cylinder(0, -0.42, 0, 0.048, 0.048, 0.03, S);
     b.paint(shoes, MAT.PLAIN).bevelBox(0, -0.452, 0.04, 0.095, 0.075, 0.235, 0.03);
     b.paint(look.shoes === '#f2f2f2' ? hex('#d8d8d8') : hex('#151515'), MAT.PLAIN).bevelBox(0, -0.493, 0.042, 0.1, 0.022, 0.25, 0.008);
