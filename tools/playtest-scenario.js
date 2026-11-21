@@ -179,7 +179,7 @@ async (page) => {
         hidden = 0;
         continue;
       }
-      if (t.d > 45 || !t.vis) { await page.mouse.up({ button: 'right' }); await walkTo(t.x, t.z, { r: t.vis ? 14 : 5, ms: 5000, sprint: true }); await page.mouse.down({ button: 'right' }); continue; }
+      if (t.d > 45 || !t.vis) { await page.mouse.up({ button: 'right' }); await walkTo(t.x, t.z, { r: t.vis ? 14 : 8, ms: 5000, sprint: true }); await page.mouse.down({ button: 'right' }); continue; }
       await look(t.yaw, t.pitch * 0.9);
       await page.mouse.down();
       await sleep(90);
@@ -416,7 +416,7 @@ async (page) => {
     }, gs.counter);
     await tp(start[0], start[1]);
     await walkTo(gs.counter[0], gs.counter[1], { r: 0.8 });
-    await until((s) => s.money < cash0, 5000, 'bought gear at Bang Bang Arms');
+    await until((s) => s.money < cash0, 20000, 'bought gear at Bang Bang Arms'); // the shop shares a 6 s (game time) cooldown with the respray
     step('ok: Kilat Respray and Bang Bang Arms');
     // ---------------------------------------------------------------- Kai vs cop distinctness
     await page.goto(`${BASE}?q=low&shot=kaicop`);
