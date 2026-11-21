@@ -7,6 +7,11 @@ async (page) => {
   const BASE = globalThis.PLAYTEST_URL ?? 'http://localhost:8080/';
   const log = [];
   const errors = [];
+  // Chunked runs: --to N stops after mission N; --only extras|map runs one of the post-story sections.
+  const TO = globalThis.PLAYTEST_TO ?? 99;
+  const ONLY = globalThis.PLAYTEST_ONLY ?? null;
+  const STOP = new Error('chunk finished');
+  const stopAfter = (k) => { if (TO === k) throw STOP; };
   const step = (msg) => log.push(`${new Date().toISOString().slice(11, 19)} ${msg}`);
   page.on('pageerror', (e) => errors.push(String(e.stack ?? e).split('\n').slice(0, 4).join(' | ')));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -208,7 +213,7 @@ async (page) => {
     const FROM = globalThis.PLAYTEST_FROM ?? 1;
     if (FROM > 1) {
       // Debug shortcut: jump to a later mission (never used for the full run).
-      await ev((n) => { const g = window.__app.game; g.missions.abort(); g.missions.passed = n - 1; g.missions.safehouseUnlocked = true; g.arsenal.give('pistol', 120); if (n > 5) g.arsenal.give('smg', 120); const f = g.city.anchors.garage.front; g.player.place(f[0] + 6, f[1]); }, FROM);
+      await ev((n) => { const g = window.__app.game; g.missions.abort(); g.missions.passed = n - 1; g.missions.safehouseUnlocked = true; g.money = Math.max(g.money, 5000); g.arsenal.give('pistol', 120); if (n > 5) g.arsenal.give('smg', 120); const f = g.city.anchors.garage.front; g.player.place(f[0] + 6, f[1]); }, FROM);
     }
     // ---------------------------------------------------------------- walk, sprint, jump with real keys
     let s0 = await S();
@@ -231,7 +236,7 @@ async (page) => {
     await until((s) => s.passed >= 1 || s.cine, 20000, 'arrived at the garage');
     await skipCutscenes();
     await until((s) => s.passed >= 1, 10000, 'Homecoming passed');
-    step('M1 Homecoming passed (real drive along the road graph)');
+    step('M1 Homecoming passed (real drive along the road graph)'); stopAfter(1);
     }
     // ---------------------------------------------------------------- M2: Yellow Fever (real drive back, lose the cops)
     if ((await S()).veh) { await page.keyboard.press('KeyF'); await sleep(1500); }
@@ -259,7 +264,7 @@ async (page) => {
     await until((s) => s.passed >= 2 || s.cine, 15000, 'Vesper delivered');
     await skipCutscenes();
     await until((s) => s.passed >= 2, 8000, 'Yellow Fever passed');
-    step('M2 Yellow Fever passed');
+    step('M2 Yellow Fever passed'); stopAfter(2);
     }
     // ---------------------------------------------------------------- M3: Collections (real firefight)
     if ((await S()).veh) { await page.keyboard.press('KeyF'); await sleep(1500); }
@@ -287,7 +292,7 @@ async (page) => {
     await until((s) => /Bring the cash/.test(s.obj), 5000, 'cash bag taken');
     await tp(garage.bay[0], garage.bay[1] - 2, Math.PI);
     await until((s) => s.passed >= 3, 8000, 'Collections passed');
-    step('M3 Collections passed');
+    step('M3 Collections passed'); stopAfter(3);
     }
     // ---------------------------------------------------------------- M4: Wheelman
     const dex = await A('dex');
@@ -305,14 +310,14 @@ async (page) => {
     const bank = await A('bank');
     await driveTo(bank.getaway[0], bank.getaway[1], { r: 6 });
     await until((s) => /Wait for Dex/.test(s.obj), 15000, 'waiting at the bank');
-    await until((s) => s.stars >= 3, 25000, 'bank alarm: three stars');
+    await until((s) => s.stars >= 3, 60000, 'bank alarm: three stars'); // a 15 s game-time countdown; game time runs slower at low frame rates
     step('bank job: 3 stars');
     await until((s) => /Lose the cops/.test(s.obj), 20000, 'Dex back in the car');
     await tp(150, 920, 0);
     await until((s) => s.stars === 0, 70000, 'lost the cops after the bank');
     await tp(dex.front[0] + 3, dex.front[1] - 3.2, -Math.PI / 2);
     await until((s) => s.passed >= 4, 20000, 'Wheelman passed');
-    step('M4 Wheelman passed');
+    step('M4 Wheelman passed'); stopAfter(4);
     }
     // ---------------------------------------------------------------- M5: Low Tide
     if ((await S()).veh) { await page.keyboard.press('KeyF'); await sleep(1500); }
@@ -336,9 +341,10 @@ async (page) => {
     await ev(() => { window.__app.game.player.god = false; });
     await tp(500, 500, 0);
     await until((s) => s.passed >= 5, 15000, 'Low Tide passed');
-    step('M5 Low Tide passed');
+    step('M5 Low Tide passed'); stopAfter(5);
     }
     // ---------------------------------------------------------------- M6: Orchid Falls
+    if (FROM <= 6) {
     const tw = await A('tower');
     await ev(() => { const g = window.__app.game; g.player.health = 100; g.player.armor = 100; g.wanted.clear(); });
     await tp(tw.front[0] + 6, tw.front[1], Math.PI);
@@ -354,9 +360,11 @@ async (page) => {
     await skipCutscenes();
     await until((s) => s.passed >= 6, 15000, 'Orchid Falls passed');
     await ev(() => { window.__app.game.player.god = false; });
-    step('M6 Orchid Falls passed — all six missions complete');
+    step('M6 Orchid Falls passed — all six missions complete'); stopAfter(6);
     await sleep(1000);
     await page.mouse.click(640, 360);
+    }
+    if (ONLY !== 'map') {
     // ---------------------------------------------------------------- save, then Continue
     await tp(sh.save[0] + 4, sh.save[1]);
     await walkTo(sh.save[0], sh.save[1], { r: 0.6 });
@@ -382,6 +390,8 @@ async (page) => {
     const sa = await until((s) => !s.fail && s.cuffed === 0, 15000, 'respawned after arrest');
     expect(Math.hypot(sa.x - pol.respawn[0], sa.z - pol.respawn[1]) < 3, 'respawn at Selara Police HQ');
     expect(await ev(() => window.__app.game.arsenal.owned.smg.ammo === 0), 'ammo confiscated on arrest');
+    }
+    if (ONLY !== 'extras') {
     // ---------------------------------------------------------------- big map waypoint, pause
     await page.keyboard.press('KeyM');
     await until((s) => s.state === 'map', 3000, 'big map open');
@@ -392,6 +402,9 @@ async (page) => {
     await until((s) => s.state === 'paused', 3000, 'paused');
     await page.click('text=RESUME');
     await until((s) => s.state === 'playing', 3000, 'resumed');
+    step('ok: big map opened, waypoint set, closed; pause and resume');
+    }
+    if (ONLY !== 'map') {
     // ---------------------------------------------------------------- respray and gun shop
     const rs = await A('respray');
     await ev(([x, z]) => { const g = window.__app.game; const v = g.vehicles.spawn('kancil', x, z, 0, { parked: true }); g.player.place(x - 3, z); window.__rc = v; }, [rs.bay[0], rs.bay[1] - 12]);
@@ -440,8 +453,9 @@ async (page) => {
       return { kai, cop, dist: Math.hypot(kai[0] - cop[0], kai[1] - cop[1], kai[2] - cop[2]) };
     });
     expect(diff.dist > 40, `Kai and the cop are visually distinct (colour distance ${diff.dist.toFixed(1)})`);
+    }
   } catch (e) {
-    errors.push(String(e.message ?? e));
+    if (e !== STOP) errors.push(String(e.message ?? e));
   }
   await releaseAll();
   return { ok: errors.length === 0, errors, log };

@@ -1,6 +1,6 @@
 // Runs tools/playtest-scenario.js in a headed desktop Chrome via playwright-core and prints the report.
 // Starts the local static server itself. Exits 1 if any step or console error fails.
-//   npm i && node tools/playtest.mjs [--url http://localhost:8091/]
+//   npm i && node tools/playtest.mjs [--from N] [--to N] [--only extras|map]
 
 import { chromium } from 'playwright-core';
 import { readFileSync } from 'node:fs';
@@ -20,6 +20,12 @@ const run = (0, eval)(`(${scenario.replace(/^\s*\/\/.*$/gm, '').trim()})`);
 globalThis.PLAYTEST_URL = `http://localhost:${port}/`;
 const fromArg = process.argv.indexOf('--from');
 if (fromArg > 0) globalThis.PLAYTEST_FROM = Number(process.argv[fromArg + 1]);
+// Chunks for machines short on memory: --to N stops after mission N; --from 7 --only extras|map runs one
+// post-story section (save/Continue, respawns, respray, gun shop, Kai-vs-cop; or the big map).
+const toArg = process.argv.indexOf('--to');
+if (toArg > 0) globalThis.PLAYTEST_TO = Number(process.argv[toArg + 1]);
+const onlyArg = process.argv.indexOf('--only');
+if (onlyArg > 0) globalThis.PLAYTEST_ONLY = process.argv[onlyArg + 1];
 
 const browser = await chromium.launch({ channel: 'chrome', headless: false, args: ['--window-size=1300,800', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
